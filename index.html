@@ -12,7 +12,7 @@
   textarea{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;margin-top:6px}
   input,select,button{padding:8px;margin-top:6px;border-radius:10px;border:1px solid #ccc}
   .card{border:1px solid #ddd;padding:15px;border-radius:12px;margin-top:15px}
-  .list-item{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .list-item{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff}
   .mini{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .status{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #ddd;font-size:12px}
   .ok{border-color:#bfe7c9;color:#0a7a2f}
@@ -21,12 +21,60 @@
   .pill{display:inline-block;border:1px solid #ddd;padding:2px 8px;border-radius:999px;font-size:12px;color:#333;background:#fff}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width: 900px){ .grid2{grid-template-columns:1fr} }
+
+  .songbox{border:1px solid #eee;border-radius:12px;padding:12px;background:#fafafa;margin-top:10px}
+  .songbox h4{margin:0 0 6px}
+  .songmeta{font-size:12px;color:#444;margin:0 0 10px}
+  .chordsOnly{
+    white-space:pre-wrap;
+    font-family:ui-monospace,Menlo,monospace;
+    font-size:12px;
+    background:#fff;
+    border:1px solid #eee;
+    padding:10px;
+    border-radius:10px;
+    margin:8px 0 10px;
+  }
+  pre.lyrics{
+    white-space:pre-wrap;
+    font-family:ui-monospace,Menlo,monospace;
+    font-size:12px;
+    background:#fff;
+    border:1px solid #eee;
+    padding:10px;
+    border-radius:10px;
+    margin:0;
+  }
+
+  /* ===== PRINT (sin duplicados y sin cortes) ===== */
   @media print{
     .tabs,.no-print{display:none !important}
     body{max-width:none;margin:0}
     .card{border:none;padding:0}
+
+    /* ✅ OCULTAR LO QUE SE VE EN PANTALLA (para NO duplicar) */
+    #setOrder, #setSongs{display:none !important;}
+
+    /* ✅ MOSTRAR SOLO EL ÁREA DE IMPRESIÓN */
+    #printArea{display:block !important;}
+    #printArea.hidden{display:block !important;}
+
     .print-block{page-break-inside:avoid;margin:0 0 18px}
-    pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;margin:0}
+    .print-title{font-size:18px;font-weight:800;margin:0 0 6px}
+    .print-meta{font-size:12px;color:#444;margin:0 0 8px}
+
+    .print-chords-title{font-size:12px;font-weight:800;margin:0 0 6px}
+    .print-chords{
+      white-space:pre-wrap;
+      font-family:ui-monospace,Menlo,monospace;
+      font-size:12px;
+      margin:0 0 10px;
+      padding:10px;
+      border:1px solid #ddd;
+      border-radius:10px;
+    }
+
+    pre.lyrics{border:1px solid #ddd}
     hr{border:none;border-top:1px solid #ddd;margin:14px 0}
   }
 </style>
@@ -125,7 +173,7 @@
       </div>
 
       <div class="muted">
-        En el setlist cada canción puede tener su propio <b>Tocar en:</b> y se imprime ya transpuesta.
+        Cada canción puede tener su propio <b>Tocar en:</b>. Se imprime ya transpuesta.
       </div>
 
       <div class="mini" style="margin-top:10px">
@@ -142,10 +190,10 @@
 
   <hr class="no-print" style="margin:16px 0;border:none;border-top:1px solid #eee">
 
-  <h3 style="margin:0 0 10px">Canciones del Setlist (se ven completas aquí)</h3>
+  <h3 style="margin:0 0 10px">Canciones del Setlist (con sección de acordes arriba)</h3>
   <div id="setSongs"></div>
 
-  <!-- PRINT AREA -->
+  <!-- PRINT AREA (solo visible al imprimir por CSS) -->
   <div id="printArea" class="hidden">
     <div id="printBlocks"></div>
   </div>
@@ -210,7 +258,6 @@
   const toKeySel = document.getElementById("toKey");
   const transposedOut = document.getElementById("transposedOut");
 
-  const printArea = document.getElementById("printArea");
   const printBlocks = document.getElementById("printBlocks");
 
   /* ================== Estado ================== */
@@ -227,7 +274,7 @@
     unlocked = v;
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
-    renderSetlist(); // refresca botones
+    renderSetlist();
   }
 
   /* ================== Tonos ================== */
@@ -255,6 +302,8 @@
   modeEl.value = "major";
   preferEl.value = "sharps";
   toKeySel.value = "C";
+
+  function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
 
   /* ================== Transposición ================== */
   const CHORD_TOKEN = /^([A-G](?:#|b)?)([^A-G\/\s]*)(?:\/([A-G](?:#|b)?))?$/;
@@ -302,6 +351,7 @@
     const out = newBass ? `${newRoot}${suffix}/${newBass}` : `${newRoot}${suffix}`;
     return out + punct;
   }
+
   function lineLooksLikeChords(line){
     const parts = line.split(/(\s+|[|]+)/);
     const tokens = parts.filter((_,i)=>i%2===0).map(x=>x.trim()).filter(Boolean);
@@ -317,6 +367,7 @@
     const ratio = chordCount / tokens.length;
     return tokens.length>=1 && ratio>=0.6;
   }
+
   function transposeChordLine(line, shift, prefer){
     return line.split(/(\s+|[|]+)/).map(part=>{
       if(part.match(/^\s+$|^[|]+$/)) return part;
@@ -329,6 +380,7 @@
       return pieces.join("-");
     }).join("");
   }
+
   function transposeAuto(text, fromKey, toKey, prefer){
     const shift = semitoneDistance(fromKey, toKey);
     if(!text) return "";
@@ -337,7 +389,42 @@
       return line;
     }).join("\n");
   }
-  function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
+
+  /* ======= NUEVO: extraer solo acordes (del texto ya transpuesto) ======= */
+  function extractChordsOnly(transposedText){
+    const lines = (transposedText || "").split("\n");
+    const chordLines = [];
+
+    for(const line of lines){
+      if(lineLooksLikeChords(line)){
+        // Normaliza espacios para que se vea bonito
+        chordLines.push(line.trim().replace(/\s{2,}/g," "));
+      }
+    }
+
+    // Si no hay líneas de acordes, intenta extraer acordes sueltos
+    if(chordLines.length === 0){
+      const found = (transposedText || "").match(/\b([A-G](?:#|b)?)(?:maj|min|m|sus|dim|aug|add)?\d*(?:\/[A-G](?:#|b)?)?\b/g);
+      if(found && found.length){
+        // quitamos duplicados consecutivos
+        const clean = [];
+        for(const c of found){
+          const last = clean[clean.length-1];
+          if(c !== last) clean.push(c);
+        }
+        return clean.join(" - ");
+      }
+      return "(No se detectaron líneas de acordes)";
+    }
+
+    // Quitar duplicados exactos consecutivos
+    const compact = [];
+    for(const ln of chordLines){
+      if(compact.length===0 || compact[compact.length-1] !== ln) compact.push(ln);
+    }
+
+    return compact.join("\n");
+  }
 
   function updateTransposePreview(){
     const from = keyEl.value || "C";
@@ -528,7 +615,6 @@
 
     await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
 
-    // quitar del setlist si estaba
     setToday = setToday.filter(x=>x.id!==currentId);
     await saveSetlist();
 
@@ -553,13 +639,11 @@
   const setRef = doc(db,"shared","today");
 
   function normalizeSetItems(items){
-    // Soporta viejo formato: ["songId","songId2"] => [{id,toKey:"C"}]
     if(!Array.isArray(items)) return [];
     if(items.length===0) return [];
     if(typeof items[0] === "string"){
       return items.map(id=>({id, toKey:"C"}));
     }
-    // nuevo formato
     return items
       .filter(x=>x && typeof x.id === "string")
       .map(x=>({ id:x.id, toKey: x.toKey || "C" }));
@@ -621,7 +705,6 @@
   };
 
   function renderSetlist(){
-    // Orden / controles
     setOrderEl.innerHTML = "";
     setSongsEl.innerHTML = "";
     printBlocks.innerHTML = "";
@@ -635,8 +718,9 @@
       const toKey = entry.toKey || "C";
       const prefer = s.prefer || "sharps";
       const transposed = transposeAuto(s.body||"", s.key||"C", toKey, prefer);
+      const chordsOnly = extractChordsOnly(transposed);
 
-      // Panel de orden
+      /* Orden + controles */
       const row = document.createElement("div");
       row.className = "list-item";
       row.innerHTML = `
@@ -659,27 +743,33 @@
       sel.value = toKey;
       sel.addEventListener("change", ()=> window.setToKey(entry.id, sel.value));
 
-      // Canción completa (pantalla)
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div class="mini" style="justify-content:space-between">
-          <div>
-            <div style="font-weight:800;font-size:16px">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
-            <div class="muted">Original: ${escapeHtml(originalLabel)} • Tocar en: <b>${escapeHtml(toKey)}</b></div>
-          </div>
-        </div>
-        <textarea readonly>${escapeHtml(transposed)}</textarea>
-      `;
-      setSongsEl.appendChild(card);
+      /* Vista en pantalla (ACORDES + CANCIÓN) */
+      const box = document.createElement("div");
+      box.className = "songbox";
+      box.innerHTML = `
+        <h4>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</h4>
+        <div class="songmeta">Original: ${escapeHtml(originalLabel)} • Tocar en: <b>${escapeHtml(toKey)}</b></div>
 
-      // Bloque de impresión
+        <div class="print-chords-title">ACORDES</div>
+        <div class="chordsOnly">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+      `;
+      setSongsEl.appendChild(box);
+
+      /* Bloque impresión (solo se imprime esto) */
       const block = document.createElement("div");
       block.className = "print-block";
       block.innerHTML = `
-        <div style="font-size:18px;font-weight:800;margin:0 0 6px">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
-        <div style="font-size:12px;color:#444;margin:0 0 8px">Original: ${escapeHtml(originalLabel)} • Tocar en: ${escapeHtml(toKey)}</div>
-        <pre>${escapeHtml(transposed)}</pre>
+        <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
+        <div class="print-meta">Original: ${escapeHtml(originalLabel)} • Tocar en: ${escapeHtml(toKey)}</div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="print-chords">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
         <hr />
       `;
       printBlocks.appendChild(block);
@@ -687,10 +777,8 @@
   }
 
   window.printSetlist = function(){
-    // Muestra el área de impresión y imprime
-    printArea.classList.remove("hidden");
+    // El CSS de impresión se encarga de imprimir SOLO printArea (sin duplicados)
     window.print();
-    printArea.classList.add("hidden");
   };
 
   /* ================== Firestore listeners ================== */
@@ -739,9 +827,8 @@
   onSnapshot(setRef, async (snap)=>{
     const itemsRaw = (snap.exists() ? snap.data()?.items : null);
     const normalized = normalizeSetItems(itemsRaw);
-
-    // Si venía en formato viejo, lo guardo ya convertido
     const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
+
     setToday = normalized;
 
     if(wasOld){
@@ -750,7 +837,7 @@
     renderSetlist();
   });
 
-  // Auto desbloqueo si guardaste la clave correcta
+  // Auto desbloqueo si la clave guardada es correcta
   if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
   else setUnlocked(false);
 
