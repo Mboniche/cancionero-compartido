@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancionero Compartido</title>
+<style>
+body{font-family:Arial;margin:20px;max-width:1100px}
+h1{margin-bottom:5px}
+.tabs button{margin-right:5px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer}
+.hidden{display:none}
+textarea{width:100%;min-height:200px;font-family:monospace;margin-top:5px}
+input,select,button{padding:8px;margin-top:5px;border-radius:8px;border:1px solid #ccc}
+.card{border:1px solid #ddd;padding:15px;border-radius:10px;margin-top:15px}
+.list-item{border:1px solid #ddd;padding:10px;border-radius:8px;margin-top:5px;display:flex;justify-content:space-between;align-items:center}
+button{cursor:pointer}
+</style>
+</head>
+<body>
+
+<h1>🎶 Cancionero Compartido</h1>
+
+<div class="tabs">
+<button onclick="showTab('library')">Biblioteca</button>
+<button onclick="showTab('today')">Setlist Hoy</button>
+<button onclick="showTab('config')">Configuración</button>
+</div>
+
+<!-- BIBLIOTECA -->
+<div id="library" class="card">
+
+<h3>Agregar / Editar Canción</h3>
+
+<input id="title" placeholder="Título">
+
+<select id="key"></select>
+
+<select id="mode">
+<option value="major">Mayor</option>
+<option value="minor">Menor</option>
+</select>
+
+<button onclick="detectKey()">Detectar tono automáticamente</button>
+
+<textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
+
+<br>
+<button onclick="saveSong()">Guardar</button>
+<button onclick="deleteSong()">Eliminar</button>
+<button onclick="clearForm()">Nueva</button>
+
+<h3>Biblioteca</h3>
+<div id="songList"></div>
+
+</div>
+
+<!-- SETLIST -->
+<div id="today" class="card hidden">
+<h3>Agregar al Setlist</h3>
+
+<select id="songPicker"></select>
+<button onclick="addToSet()">Agregar</button>
+<button onclick="clearSet()">Vaciar</button>
+
+<h3>Setlist</h3>
+<div id="setList"></div>
+
+<button onclick="window.print()">🖨️ Imprimir</button>
+</div>
+
+<!-- CONFIG -->
+<div id="config" class="card hidden">
+<h3>Clave de edición</h3>
+<input id="editKeyInput" placeholder="Clave">
+<button onclick="unlock()">Desbloquear</button>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+/* ================== TU FIREBASE ================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
+  authDomain: "cancionero-compartido.firebaseapp.com",
+  projectId: "cancionero-compartido",
+  storageBucket: "cancionero-compartido.firebasestorage.app",
+  messagingSenderId: "405748067102",
+  appId: "1:405748067102:web:6e2f9754d826b55438770f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ================== CLAVE ================== */
+const EDIT_KEY_MASTER = "CFVN2026";
+let unlocked = false;
+
+/* ================== TONOS ================== */
+const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+function buildKeys(){
+const sel=document.getElementById("key");
+NOTES.forEach(n=>{
+let o=document.createElement("option");
+o.value=n;o.textContent=n;
+sel.appendChild(o);
+});
+}
+buildKeys();
+
+/* ================== DETECTAR TONO ================== */
+function detectKey(){
+let text=document.getElementById("body").value;
+let match=text.match(/\b([A-G](#|b)?m?)\b/g);
+if(!match){alert("No detecté acordes");return;}
+let first=match[0];
+if(first.endsWith("m")){
+document.getElementById("mode").value="minor";
+document.getElementById("key").value=first.replace("m","");
+}else{
+document.getElementById("mode").value="major";
+document.getElementById("key").value=first;
+}
+alert("Detectado: "+first);
+}
+
+/* ================== CRUD ================== */
+let currentId=null;
+
+function clearForm(){
+currentId=null;
+title.value="";
+body.value="";
+}
+
+async function saveSong(){
+if(!unlocked){alert("Bloqueado");return;}
+let id=currentId||crypto.randomUUID();
+await setDoc(doc(db,"songs",id),{
+title:title.value,
+key:key.value,
+mode:mode.value,
+body:body.value
+});
+currentId=id;
+}
+
+async function deleteSong(){
+if(!unlocked){alert("Bloqueado");return;}
+if(!currentId)return;
+await setDoc(doc(db,"songs",currentId),{deleted:true},{merge:true});
+clearForm();
+}
+
+/* ================== LISTEN ================== */
+onSnapshot(collection(db,"songs"),(snap)=>{
+songList.innerHTML="";
+songPicker.innerHTML="";
+snap.forEach(docu=>{
+let d=docu.data();
+if(d.deleted)return;
+let div=document.createElement("div");
+div.className="list-item";
+div.innerHTML="<span>"+d.title+" ("+d.key+(d.mode==="minor"?"m":"")+")</span><button onclick=\"loadSong('"+docu.id+"')\">Abrir</button>";
+songList.appendChild(div);
+
+let opt=document.createElement("option");
+opt.value=docu.id;
+opt.textContent=d.title;
+songPicker.appendChild(opt);
+});
+});
+
+window.loadSong=async function(id){
+let docu=await getDoc(doc(db,"songs",id));
+let d=docu.data();
+currentId=id;
+title.value=d.title;
+key.value=d.key;
+mode.value=d.mode;
+body.value=d.body;
+}
+
+/* ================== SETLIST ================== */
+let setRef=doc(db,"shared","today");
+
+onSnapshot(setRef,(snap)=>{
+setList.innerHTML="";
+if(!snap.exists())return;
+let data=snap.data();
+if(!data.items)return;
+data.items.forEach(id=>{
+let div=document.createElement("div");
+div.className="list-item";
+div.innerHTML="<span>"+id+"</span>";
+setList.appendChild(div);
+});
+});
+
+async function addToSet(){
+if(!unlocked){alert("Bloqueado");return;}
+let snap=await getDoc(setRef);
+let items=snap.exists()&&snap.data().items?snap.data().items:[];
+items.push(songPicker.value);
+await setDoc(setRef,{items});
+}
+
+async function clearSet(){
+if(!unlocked){alert("Bloqueado");return;}
+await setDoc(setRef,{items:[]});
+}
+
+/* ================== CLAVE ================== */
+window.unlock=function(){
+if(editKeyInput.value===EDIT_KEY_MASTER){
+unlocked=true;
+alert("Modo edición activado");
+}else alert("Clave incorrecta");
+}
+
+/* ================== TABS ================== */
+window.showTab=function(name){
+library.classList.add("hidden");
+today.classList.add("hidden");
+config.classList.add("hidden");
+document.getElementById(name).classList.remove("hidden");
+}
+
+</script>
+</body>
+</html>
