@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cancionero Compartido</title>
 <style>
-  body{font-family:system-ui,Arial;margin:20px;max-width:1100px}
+  body{font-family:system-ui,Arial;margin:20px;max-width:1200px}
   h1{margin:0 0 6px}
   .tabs button{margin-right:6px;padding:8px 12px;border-radius:10px;border:1px solid #ccc;cursor:pointer;background:#fff}
   .hidden{display:none}
@@ -19,17 +19,27 @@
   .warn{border-color:#ffe1b5;color:#b45f06}
   .muted{color:#666;font-size:12px;line-height:1.35;margin-top:6px}
   .pill{display:inline-block;border:1px solid #ddd;padding:2px 8px;border-radius:999px;font-size:12px;color:#333;background:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width: 900px){ .grid2{grid-template-columns:1fr} }
+  @media print{
+    .tabs,.no-print{display:none !important}
+    body{max-width:none;margin:0}
+    .card{border:none;padding:0}
+    .print-block{page-break-inside:avoid;margin:0 0 18px}
+    pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;margin:0}
+    hr{border:none;border-top:1px solid #ddd;margin:14px 0}
+  }
 </style>
 </head>
 <body>
 
 <h1>🎶 Cancionero Compartido</h1>
-<div class="mini">
+<div class="mini no-print">
   <span id="netStatus" class="status warn">Conectando a Firebase…</span>
   <span id="editStatus" class="status warn">Modo lectura (bloqueado)</span>
 </div>
 
-<div class="tabs" style="margin-top:10px">
+<div class="tabs no-print" style="margin-top:10px">
   <button onclick="showTab('library')">Biblioteca</button>
   <button onclick="showTab('today')">Setlist Hoy</button>
   <button onclick="showTab('config')">Configuración</button>
@@ -65,20 +75,20 @@
     </div>
   </div>
 
-  <button onclick="detectKeyAdvanced()">🎯 Detectar tono automáticamente (mejorado)</button>
+  <button class="no-print" onclick="detectKeyAdvanced()">🎯 Detectar tono automáticamente</button>
 
   <label style="display:block;margin-top:10px"><b>Letra + acordes</b></label>
   <textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
 
-  <div class="mini">
+  <div class="mini no-print">
     <button onclick="saveSong()">Guardar / Actualizar</button>
     <button onclick="deleteSong()">Eliminar</button>
     <button onclick="clearForm()">Nueva</button>
   </div>
 
-  <!-- TRANSPOSE -->
+  <!-- TRANSPOSE (preview) -->
   <div style="margin-top:12px;border-top:1px dashed #ddd;padding-top:12px">
-    <h3 style="margin:0 0 8px">Transposición</h3>
+    <h3 style="margin:0 0 8px">Transposición (vista previa)</h3>
 
     <div class="mini">
       <div style="flex:1;min-width:160px">
@@ -102,21 +112,43 @@
   <div id="songList"></div>
 </div>
 
-<!-- SETLIST -->
+<!-- SETLIST HOY -->
 <div id="today" class="card hidden">
-  <h3 style="margin:0 0 10px">Agregar al Setlist (compartido)</h3>
+  <div class="grid2 no-print">
+    <div>
+      <h3 style="margin:0 0 10px">Agregar al Setlist (compartido)</h3>
 
-  <div class="mini">
-    <select id="songPicker" style="flex:1;min-width:240px"></select>
-    <button onclick="addToSet()">Agregar</button>
-    <button onclick="clearSet()">Vaciar</button>
+      <div class="mini">
+        <select id="songPicker" style="flex:1;min-width:240px"></select>
+        <button onclick="addToSet()">Agregar</button>
+        <button onclick="clearSet()">Vaciar</button>
+      </div>
+
+      <div class="muted">
+        En el setlist cada canción puede tener su propio <b>Tocar en:</b> y se imprime ya transpuesta.
+      </div>
+
+      <div class="mini" style="margin-top:10px">
+        <button onclick="printSetlist()">🖨️ Imprimir setlist</button>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 10px">Orden del Setlist</h3>
+      <div id="setOrder"></div>
+      <div id="emptySet" class="muted" style="display:none;margin-top:8px">No hay canciones en el setlist.</div>
+    </div>
   </div>
 
-  <h3 style="margin:18px 0 10px">Setlist (compartido)</h3>
-  <div id="setList"></div>
+  <hr class="no-print" style="margin:16px 0;border:none;border-top:1px solid #eee">
 
-  <button onclick="window.print()">🖨️ Imprimir</button>
-  <div class="muted">Imprime el setlist (en esta versión imprime títulos; si querés imprimir la letra transpuesta por canción, te lo agrego).</div>
+  <h3 style="margin:0 0 10px">Canciones del Setlist (se ven completas aquí)</h3>
+  <div id="setSongs"></div>
+
+  <!-- PRINT AREA -->
+  <div id="printArea" class="hidden">
+    <div id="printBlocks"></div>
+  </div>
 </div>
 
 <!-- CONFIG -->
@@ -124,7 +156,7 @@
   <h3 style="margin:0 0 10px">Clave de edición</h3>
 
   <input id="editKeyInput" placeholder="Escribí la clave" style="width:100%">
-  <div class="mini">
+  <div class="mini no-print">
     <button onclick="unlock()">Desbloquear</button>
     <button onclick="lockEdit()">Bloquear</button>
   </div>
@@ -149,7 +181,6 @@
     messagingSenderId: "405748067102",
     appId: "1:405748067102:web:6e2f9754d826b55438770f"
   };
-
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
@@ -167,8 +198,11 @@
   const bodyEl  = document.getElementById("body");
 
   const songListEl = document.getElementById("songList");
+
   const songPickerEl = document.getElementById("songPicker");
-  const setListEl  = document.getElementById("setList");
+  const setOrderEl = document.getElementById("setOrder");
+  const setSongsEl = document.getElementById("setSongs");
+  const emptySetEl = document.getElementById("emptySet");
 
   const editKeyInputEl = document.getElementById("editKeyInput");
 
@@ -176,12 +210,15 @@
   const toKeySel = document.getElementById("toKey");
   const transposedOut = document.getElementById("transposedOut");
 
+  const printArea = document.getElementById("printArea");
+  const printBlocks = document.getElementById("printBlocks");
+
   /* ================== Estado ================== */
   let unlocked = false;
   let currentId = null;
   let songsCache = new Map(); // id -> song data
+  let setToday = [];          // [{id,toKey}]
 
-  // Guardar clave local (opcional)
   const LS_KEY = "cancionero_editkey";
   const savedKey = localStorage.getItem(LS_KEY);
   if(savedKey) editKeyInputEl.value = savedKey;
@@ -190,9 +227,10 @@
     unlocked = v;
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
+    renderSetlist(); // refresca botones
   }
 
-  /* ================== Tonos / selects ================== */
+  /* ================== Tonos ================== */
   const NOTES_SHARPS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
   const NOTES_FLATS  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
   const KEY_OPTIONS  = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
@@ -299,11 +337,11 @@
       return line;
     }).join("\n");
   }
+  function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
 
   function updateTransposePreview(){
     const from = keyEl.value || "C";
-    const isMinor = (modeEl.value === "minor");
-    fromKeyView.value = from + (isMinor ? "m" : "");
+    fromKeyView.value = from + modeSuffix(modeEl.value);
     const to = toKeySel.value || "C";
     const prefer = preferEl.value || "sharps";
     transposedOut.value = transposeAuto(bodyEl.value || "", from, to, prefer);
@@ -315,7 +353,7 @@
   preferEl.addEventListener("change", updateTransposePreview);
   toKeySel.addEventListener("change", updateTransposePreview);
 
-  /* ================== Detector avanzado Mayor/Menor ================== */
+  /* ================== Detector Mayor/Menor ================== */
   function extractChordsFromText(text){
     const chords = [];
     const lines = (text||"").split("\n");
@@ -376,7 +414,6 @@
     score += counts[keyPC] * 4;
     const V = (keyPC + 7) % 12;
     score += counts[V] * 2.5;
-    if(mode==="minor") score += counts[V] * 2.5;
 
     const totalQual = minorCount + majorCount;
     if(totalQual>0){
@@ -406,12 +443,21 @@
     return { ok:true, key:palette[best.keyPC], mode:best.mode, chordsFound:chords.length };
   }
 
-  /* ================== Funciones globales (onclick) ================== */
+  /* ================== Helpers ================== */
+  function escapeHtml(str){
+    return (str||"").replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[s]));
+  }
+  function getSong(id){ return songsCache.get(id) || null; }
+
+  /* ================== Global (onclick) ================== */
   window.showTab = function(name){
     document.getElementById("library").classList.add("hidden");
     document.getElementById("today").classList.add("hidden");
     document.getElementById("config").classList.add("hidden");
     document.getElementById(name).classList.remove("hidden");
+    if(name==="today") renderSetlist();
   };
 
   window.unlock = function(){
@@ -448,7 +494,7 @@
     if(!res.ok){ alert(res.reason); return; }
     keyEl.value = res.key;
     modeEl.value = res.mode;
-    alert(`Detectado: ${res.key}${res.mode==="minor" ? "m" : ""} (acordes analizados: ${res.chordsFound})`);
+    alert(`Detectado: ${res.key}${modeSuffix(res.mode)} (acordes analizados: ${res.chordsFound})`);
     updateTransposePreview();
   };
 
@@ -481,6 +527,11 @@
     if(!confirm(`¿Eliminar "${d?.title || "esta canción"}"?`)) return;
 
     await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
+
+    // quitar del setlist si estaba
+    setToday = setToday.filter(x=>x.id!==currentId);
+    await saveSetlist();
+
     window.clearForm();
   };
 
@@ -498,29 +549,151 @@
     window.showTab("library");
   };
 
-  /* ================== Setlist compartido ================== */
+  /* ================== Setlist Shared ================== */
   const setRef = doc(db,"shared","today");
+
+  function normalizeSetItems(items){
+    // Soporta viejo formato: ["songId","songId2"] => [{id,toKey:"C"}]
+    if(!Array.isArray(items)) return [];
+    if(items.length===0) return [];
+    if(typeof items[0] === "string"){
+      return items.map(id=>({id, toKey:"C"}));
+    }
+    // nuevo formato
+    return items
+      .filter(x=>x && typeof x.id === "string")
+      .map(x=>({ id:x.id, toKey: x.toKey || "C" }));
+  }
+
+  async function saveSetlist(){
+    await setDoc(setRef, { items: setToday }, { merge:true });
+  }
 
   window.addToSet = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
     const id = songPickerEl.value;
     if(!id){ alert("Elegí una canción."); return; }
-
-    const snap = await getDoc(setRef);
-    const items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
-
-    if(items.includes(id)){ alert("Ya está en el setlist."); return; }
-    items.push(id);
-    await setDoc(setRef,{ items },{ merge:true });
+    if(setToday.some(x=>x.id===id)){ alert("Ya está en el setlist."); return; }
+    setToday = [...setToday, {id, toKey:"C"}];
+    await saveSetlist();
   };
 
   window.clearSet = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
     if(!confirm("¿Vaciar setlist?")) return;
-    await setDoc(setRef,{ items:[] },{ merge:true });
+    setToday = [];
+    await saveSetlist();
   };
 
-  /* ================== Listeners Firestore ================== */
+  window.setToKey = async function(id, toKey){
+    const entry = setToday.find(x=>x.id===id);
+    if(!entry) return;
+    entry.toKey = toKey;
+    setToday = setToday.map(x=> x.id===id ? entry : x);
+    if(unlocked) await saveSetlist();
+    renderSetlist();
+  };
+
+  window.moveUp = async function(id){
+    if(!unlocked) return;
+    const i = setToday.findIndex(x=>x.id===id);
+    if(i<=0) return;
+    const arr = setToday.slice();
+    [arr[i-1], arr[i]] = [arr[i], arr[i-1]];
+    setToday = arr;
+    await saveSetlist();
+  };
+
+  window.moveDown = async function(id){
+    if(!unlocked) return;
+    const i = setToday.findIndex(x=>x.id===id);
+    if(i<0 || i>=setToday.length-1) return;
+    const arr = setToday.slice();
+    [arr[i+1], arr[i]] = [arr[i], arr[i+1]];
+    setToday = arr;
+    await saveSetlist();
+  };
+
+  window.removeFromSet = async function(id){
+    if(!unlocked) return;
+    setToday = setToday.filter(x=>x.id!==id);
+    await saveSetlist();
+  };
+
+  function renderSetlist(){
+    // Orden / controles
+    setOrderEl.innerHTML = "";
+    setSongsEl.innerHTML = "";
+    printBlocks.innerHTML = "";
+
+    const visible = setToday.filter(x=>getSong(x.id));
+    emptySetEl.style.display = (visible.length===0) ? "block" : "none";
+
+    visible.forEach((entry, idx)=>{
+      const s = getSong(entry.id);
+      const originalLabel = (s.key||"C") + (s.mode==="minor" ? "m" : "");
+      const toKey = entry.toKey || "C";
+      const prefer = s.prefer || "sharps";
+      const transposed = transposeAuto(s.body||"", s.key||"C", toKey, prefer);
+
+      // Panel de orden
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.innerHTML = `
+        <div>
+          <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
+          <div class="muted">Original: ${escapeHtml(originalLabel)} • Tocar en: <span class="pill">${escapeHtml(toKey)}</span></div>
+        </div>
+        <div class="mini">
+          <label class="muted" style="margin:0">Tocar en:</label>
+          <select data-id="${entry.id}" ${unlocked ? "" : "disabled"} style="min-width:90px"></select>
+          <button onclick="moveUp('${entry.id}')" ${unlocked ? "" : "disabled"}>↑</button>
+          <button onclick="moveDown('${entry.id}')" ${unlocked ? "" : "disabled"}>↓</button>
+          <button onclick="removeFromSet('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
+        </div>
+      `;
+      setOrderEl.appendChild(row);
+
+      const sel = row.querySelector("select");
+      buildKeySelect(sel);
+      sel.value = toKey;
+      sel.addEventListener("change", ()=> window.setToKey(entry.id, sel.value));
+
+      // Canción completa (pantalla)
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="mini" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:800;font-size:16px">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
+            <div class="muted">Original: ${escapeHtml(originalLabel)} • Tocar en: <b>${escapeHtml(toKey)}</b></div>
+          </div>
+        </div>
+        <textarea readonly>${escapeHtml(transposed)}</textarea>
+      `;
+      setSongsEl.appendChild(card);
+
+      // Bloque de impresión
+      const block = document.createElement("div");
+      block.className = "print-block";
+      block.innerHTML = `
+        <div style="font-size:18px;font-weight:800;margin:0 0 6px">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
+        <div style="font-size:12px;color:#444;margin:0 0 8px">Original: ${escapeHtml(originalLabel)} • Tocar en: ${escapeHtml(toKey)}</div>
+        <pre>${escapeHtml(transposed)}</pre>
+        <hr />
+      `;
+      printBlocks.appendChild(block);
+    });
+  }
+
+  window.printSetlist = function(){
+    // Muestra el área de impresión y imprime
+    printArea.classList.remove("hidden");
+    window.print();
+    printArea.classList.add("hidden");
+  };
+
+  /* ================== Firestore listeners ================== */
   onSnapshot(collection(db,"songs"), (snap)=>{
     netStatus.textContent = "✅ Conectado (Firebase)";
     netStatus.className = "status ok";
@@ -541,7 +714,7 @@
       div.innerHTML = `
         <div>
           <div><b>${escapeHtml(d.title||"(Sin título)")}</b></div>
-          <div style="font-size:12px;color:#666">Tono: ${escapeHtml(tonal)}</div>
+          <div class="muted">Tono: ${escapeHtml(tonal)}</div>
         </div>
         <div class="mini">
           <button onclick="loadSong('${docu.id}')">Abrir</button>
@@ -556,41 +729,32 @@
     });
 
     updateTransposePreview();
+    renderSetlist();
   }, (err)=>{
     console.error(err);
     netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
     netStatus.className = "status warn";
   });
 
-  onSnapshot(setRef, (snap)=>{
-    setListEl.innerHTML = "";
-    const items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
-    if(items.length===0){
-      setListEl.innerHTML = `<div class="muted">No hay canciones en el setlist.</div>`;
-      return;
-    }
+  onSnapshot(setRef, async (snap)=>{
+    const itemsRaw = (snap.exists() ? snap.data()?.items : null);
+    const normalized = normalizeSetItems(itemsRaw);
 
-    for(const id of items){
-      const d = songsCache.get(id);
-      const name = d?.title || id;
-      const div=document.createElement("div");
-      div.className="list-item";
-      div.innerHTML = `<span>${escapeHtml(name)}</span>`;
-      setListEl.appendChild(div);
+    // Si venía en formato viejo, lo guardo ya convertido
+    const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
+    setToday = normalized;
+
+    if(wasOld){
+      try { await saveSetlist(); } catch(e){ console.warn("No pude migrar setlist:", e); }
     }
+    renderSetlist();
   });
 
-  // auto-desbloqueo si ya guardaste la clave correcta
+  // Auto desbloqueo si guardaste la clave correcta
   if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
   else setUnlocked(false);
 
   updateTransposePreview();
-
-  function escapeHtml(str){
-    return (str||"").replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[s]));
-  }
 </script>
 
 </body>
