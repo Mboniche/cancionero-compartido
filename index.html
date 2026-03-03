@@ -5,228 +5,357 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cancionero Compartido</title>
 <style>
-body{font-family:Arial;margin:20px;max-width:1100px}
-h1{margin-bottom:5px}
-.tabs button{margin-right:5px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer}
-.hidden{display:none}
-textarea{width:100%;min-height:200px;font-family:monospace;margin-top:5px}
-input,select,button{padding:8px;margin-top:5px;border-radius:8px;border:1px solid #ccc}
-.card{border:1px solid #ddd;padding:15px;border-radius:10px;margin-top:15px}
-.list-item{border:1px solid #ddd;padding:10px;border-radius:8px;margin-top:5px;display:flex;justify-content:space-between;align-items:center}
-button{cursor:pointer}
+  body{font-family:system-ui,Arial;margin:20px;max-width:1100px}
+  h1{margin:0 0 6px}
+  .tabs button{margin-right:6px;padding:8px 12px;border-radius:10px;border:1px solid #ccc;cursor:pointer;background:#fff}
+  .hidden{display:none}
+  textarea{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;margin-top:6px}
+  input,select,button{padding:8px;margin-top:6px;border-radius:10px;border:1px solid #ccc}
+  .card{border:1px solid #ddd;padding:15px;border-radius:12px;margin-top:15px}
+  .list-item{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .mini{display:flex;gap:8px;flex-wrap:wrap}
+  .status{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #ddd;font-size:12px}
+  .ok{border-color:#bfe7c9;color:#0a7a2f}
+  .warn{border-color:#ffe1b5;color:#b45f06}
 </style>
 </head>
 <body>
 
 <h1>🎶 Cancionero Compartido</h1>
+<div class="mini">
+  <span id="netStatus" class="status warn">Conectando a Firebase…</span>
+  <span id="editStatus" class="status warn">Modo lectura (bloqueado)</span>
+</div>
 
-<div class="tabs">
-<button onclick="showTab('library')">Biblioteca</button>
-<button onclick="showTab('today')">Setlist Hoy</button>
-<button onclick="showTab('config')">Configuración</button>
+<div class="tabs" style="margin-top:10px">
+  <button onclick="showTab('library')">Biblioteca</button>
+  <button onclick="showTab('today')">Setlist Hoy</button>
+  <button onclick="showTab('config')">Configuración</button>
 </div>
 
 <!-- BIBLIOTECA -->
 <div id="library" class="card">
+  <h3 style="margin:0 0 10px">Agregar / Editar canción</h3>
 
-<h3>Agregar / Editar Canción</h3>
+  <label><b>Título</b></label><br>
+  <input id="title" placeholder="Nombre de la canción" style="width:100%">
 
-<input id="title" placeholder="Título">
+  <div class="mini">
+    <div style="flex:1;min-width:160px">
+      <label><b>Tono original</b></label><br>
+      <select id="key" style="width:100%"></select>
+    </div>
 
-<select id="key"></select>
+    <div style="flex:1;min-width:160px">
+      <label><b>Mayor / Menor</b></label><br>
+      <select id="mode" style="width:100%">
+        <option value="major">Mayor</option>
+        <option value="minor">Menor</option>
+      </select>
+    </div>
+  </div>
 
-<select id="mode">
-<option value="major">Mayor</option>
-<option value="minor">Menor</option>
-</select>
+  <button onclick="detectKey()">🎯 Detectar tono automáticamente</button>
 
-<button onclick="detectKey()">Detectar tono automáticamente</button>
+  <label style="display:block;margin-top:10px"><b>Letra + acordes</b></label>
+  <textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
 
-<textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
+  <div class="mini">
+    <button onclick="saveSong()">Guardar / Actualizar</button>
+    <button onclick="deleteSong()">Eliminar</button>
+    <button onclick="clearForm()">Nueva</button>
+  </div>
 
-<br>
-<button onclick="saveSong()">Guardar</button>
-<button onclick="deleteSong()">Eliminar</button>
-<button onclick="clearForm()">Nueva</button>
-
-<h3>Biblioteca</h3>
-<div id="songList"></div>
-
+  <h3 style="margin:18px 0 10px">Biblioteca</h3>
+  <div id="songList"></div>
 </div>
 
 <!-- SETLIST -->
 <div id="today" class="card hidden">
-<h3>Agregar al Setlist</h3>
+  <h3 style="margin:0 0 10px">Agregar al Setlist</h3>
 
-<select id="songPicker"></select>
-<button onclick="addToSet()">Agregar</button>
-<button onclick="clearSet()">Vaciar</button>
+  <div class="mini">
+    <select id="songPicker" style="flex:1;min-width:240px"></select>
+    <button onclick="addToSet()">Agregar</button>
+    <button onclick="clearSet()">Vaciar</button>
+  </div>
 
-<h3>Setlist</h3>
-<div id="setList"></div>
+  <h3 style="margin:18px 0 10px">Setlist (compartido)</h3>
+  <div id="setList"></div>
 
-<button onclick="window.print()">🖨️ Imprimir</button>
+  <button onclick="window.print()">🖨️ Imprimir</button>
 </div>
 
 <!-- CONFIG -->
 <div id="config" class="card hidden">
-<h3>Clave de edición</h3>
-<input id="editKeyInput" placeholder="Clave">
-<button onclick="unlock()">Desbloquear</button>
+  <h3 style="margin:0 0 10px">Clave de edición</h3>
+
+  <input id="editKeyInput" placeholder="Escribí la clave" style="width:100%">
+  <div class="mini">
+    <button onclick="unlock()">Desbloquear</button>
+    <button onclick="lockEdit()">Bloquear</button>
+  </div>
+
+  <p style="color:#666;font-size:12px;line-height:1.4;margin-top:10px">
+    La clave es un bloqueo “práctico” en la app. Para seguridad real al 100% se hace con usuarios (Firebase Auth).
+  </p>
 </div>
 
 <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDoc, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  /* ================== TU FIREBASE ================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
+    authDomain: "cancionero-compartido.firebaseapp.com",
+    projectId: "cancionero-compartido",
+    storageBucket: "cancionero-compartido.firebasestorage.app",
+    messagingSenderId: "405748067102",
+    appId: "1:405748067102:web:6e2f9754d826b55438770f"
+  };
 
-/* ================== TU FIREBASE ================== */
-const firebaseConfig = {
-  apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
-  authDomain: "cancionero-compartido.firebaseapp.com",
-  projectId: "cancionero-compartido",
-  storageBucket: "cancionero-compartido.firebasestorage.app",
-  messagingSenderId: "405748067102",
-  appId: "1:405748067102:web:6e2f9754d826b55438770f"
-};
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  /* ================== CLAVE (CAMBIA ESTO) ================== */
+  const EDIT_KEY_MASTER = "CFVN2026";
 
-/* ================== CLAVE ================== */
-const EDIT_KEY_MASTER = "CFVN2026";
-let unlocked = false;
+  /* ================== UI refs ================== */
+  const netStatus = document.getElementById("netStatus");
+  const editStatus = document.getElementById("editStatus");
 
-/* ================== TONOS ================== */
-const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-function buildKeys(){
-const sel=document.getElementById("key");
-NOTES.forEach(n=>{
-let o=document.createElement("option");
-o.value=n;o.textContent=n;
-sel.appendChild(o);
-});
-}
-buildKeys();
+  const titleEl = document.getElementById("title");
+  const keyEl   = document.getElementById("key");
+  const modeEl  = document.getElementById("mode");
+  const bodyEl  = document.getElementById("body");
 
-/* ================== DETECTAR TONO ================== */
-function detectKey(){
-let text=document.getElementById("body").value;
-let match=text.match(/\b([A-G](#|b)?m?)\b/g);
-if(!match){alert("No detecté acordes");return;}
-let first=match[0];
-if(first.endsWith("m")){
-document.getElementById("mode").value="minor";
-document.getElementById("key").value=first.replace("m","");
-}else{
-document.getElementById("mode").value="major";
-document.getElementById("key").value=first;
-}
-alert("Detectado: "+first);
-}
+  const songListEl = document.getElementById("songList");
+  const songPickerEl = document.getElementById("songPicker");
+  const setListEl  = document.getElementById("setList");
 
-/* ================== CRUD ================== */
-let currentId=null;
+  const editKeyInputEl = document.getElementById("editKeyInput");
 
-function clearForm(){
-currentId=null;
-title.value="";
-body.value="";
-}
+  /* ================== Estado ================== */
+  let unlocked = false;
+  let currentId = null;
+  let songsCache = new Map(); // id -> song data
 
-async function saveSong(){
-if(!unlocked){alert("Bloqueado");return;}
-let id=currentId||crypto.randomUUID();
-await setDoc(doc(db,"songs",id),{
-title:title.value,
-key:key.value,
-mode:mode.value,
-body:body.value
-});
-currentId=id;
-}
+  // Guardar clave local para que no la metas cada vez
+  const LS_KEY = "cancionero_editkey";
+  const savedKey = localStorage.getItem(LS_KEY);
+  if(savedKey) editKeyInputEl.value = savedKey;
 
-async function deleteSong(){
-if(!unlocked){alert("Bloqueado");return;}
-if(!currentId)return;
-await setDoc(doc(db,"songs",currentId),{deleted:true},{merge:true});
-clearForm();
-}
+  function setUnlocked(v){
+    unlocked = v;
+    editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
+    editStatus.className = "status " + (v ? "ok" : "warn");
+  }
 
-/* ================== LISTEN ================== */
-onSnapshot(collection(db,"songs"),(snap)=>{
-songList.innerHTML="";
-songPicker.innerHTML="";
-snap.forEach(docu=>{
-let d=docu.data();
-if(d.deleted)return;
-let div=document.createElement("div");
-div.className="list-item";
-div.innerHTML="<span>"+d.title+" ("+d.key+(d.mode==="minor"?"m":"")+")</span><button onclick=\"loadSong('"+docu.id+"')\">Abrir</button>";
-songList.appendChild(div);
+  /* ================== Tonos ================== */
+  const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  function buildKeys(){
+    keyEl.innerHTML = "";
+    NOTES.forEach(n=>{
+      const o=document.createElement("option");
+      o.value=n; o.textContent=n;
+      keyEl.appendChild(o);
+    });
+  }
+  buildKeys();
 
-let opt=document.createElement("option");
-opt.value=docu.id;
-opt.textContent=d.title;
-songPicker.appendChild(opt);
-});
-});
+  /* ================== Funciones globales para onclick ================== */
+  window.showTab = function(name){
+    document.getElementById("library").classList.add("hidden");
+    document.getElementById("today").classList.add("hidden");
+    document.getElementById("config").classList.add("hidden");
+    document.getElementById(name).classList.remove("hidden");
+  };
 
-window.loadSong=async function(id){
-let docu=await getDoc(doc(db,"songs",id));
-let d=docu.data();
-currentId=id;
-title.value=d.title;
-key.value=d.key;
-mode.value=d.mode;
-body.value=d.body;
-}
+  window.unlock = function(){
+    const k = (editKeyInputEl.value || "").trim();
+    if(k === EDIT_KEY_MASTER){
+      localStorage.setItem(LS_KEY, k);
+      setUnlocked(true);
+      alert("✅ Modo edición activado");
+    } else {
+      setUnlocked(false);
+      alert("Clave incorrecta");
+    }
+  };
 
-/* ================== SETLIST ================== */
-let setRef=doc(db,"shared","today");
+  window.lockEdit = function(){
+    localStorage.removeItem(LS_KEY);
+    editKeyInputEl.value = "";
+    setUnlocked(false);
+  };
 
-onSnapshot(setRef,(snap)=>{
-setList.innerHTML="";
-if(!snap.exists())return;
-let data=snap.data();
-if(!data.items)return;
-data.items.forEach(id=>{
-let div=document.createElement("div");
-div.className="list-item";
-div.innerHTML="<span>"+id+"</span>";
-setList.appendChild(div);
-});
-});
+  window.clearForm = function(){
+    currentId = null;
+    titleEl.value = "";
+    bodyEl.value = "";
+    keyEl.value = "C";
+    modeEl.value = "major";
+  };
 
-async function addToSet(){
-if(!unlocked){alert("Bloqueado");return;}
-let snap=await getDoc(setRef);
-let items=snap.exists()&&snap.data().items?snap.data().items:[];
-items.push(songPicker.value);
-await setDoc(setRef,{items});
-}
+  // Detecto “simple” por primer acorde encontrado (rápido).
+  // Si querés, lo vuelvo al detector avanzado que teníamos antes.
+  window.detectKey = function(){
+    const text = bodyEl.value || "";
+    const match = text.match(/\b([A-G](#|b)?m?)\b/g);
+    if(!match){ alert("No detecté acordes claros"); return; }
+    const first = match[0];
+    if(first.endsWith("m")){
+      modeEl.value = "minor";
+      keyEl.value = first.replace("m","");
+    }else{
+      modeEl.value = "major";
+      keyEl.value = first;
+    }
+    alert("Detectado: " + first);
+  };
 
-async function clearSet(){
-if(!unlocked){alert("Bloqueado");return;}
-await setDoc(setRef,{items:[]});
-}
+  window.saveSong = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
 
-/* ================== CLAVE ================== */
-window.unlock=function(){
-if(editKeyInput.value===EDIT_KEY_MASTER){
-unlocked=true;
-alert("Modo edición activado");
-}else alert("Clave incorrecta");
-}
+    const title = (titleEl.value || "").trim();
+    const body  = (bodyEl.value || "").trim();
+    if(!title && !body){ alert("Poné título o contenido."); return; }
 
-/* ================== TABS ================== */
-window.showTab=function(name){
-library.classList.add("hidden");
-today.classList.add("hidden");
-config.classList.add("hidden");
-document.getElementById(name).classList.remove("hidden");
-}
+    const id = currentId || (crypto.randomUUID ? crypto.randomUUID() : ("s_"+Date.now()+Math.random().toString(16).slice(2)));
 
+    await setDoc(doc(db,"songs",id),{
+      title,
+      key: keyEl.value,
+      mode: modeEl.value,
+      body,
+      deleted: false
+    }, { merge:true });
+
+    currentId = id;
+    alert("✅ Guardado (compartido)");
+  };
+
+  window.deleteSong = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!currentId){ alert("No hay canción cargada."); return; }
+
+    const d = songsCache.get(currentId);
+    if(!confirm(`¿Eliminar "${d?.title || "esta canción"}"?`)) return;
+
+    await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
+    window.clearForm();
+  };
+
+  window.loadSong = async function(id){
+    const snap = await getDoc(doc(db,"songs",id));
+    if(!snap.exists()) return;
+    const d = snap.data();
+    currentId = id;
+    titleEl.value = d.title || "";
+    keyEl.value   = d.key || "C";
+    modeEl.value  = d.mode || "major";
+    bodyEl.value  = d.body || "";
+    window.showTab("library");
+  };
+
+  /* ================== Setlist compartido ================== */
+  const setRef = doc(db,"shared","today");
+
+  window.addToSet = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const id = songPickerEl.value;
+    if(!id){ alert("Elegí una canción."); return; }
+
+    const snap = await getDoc(setRef);
+    const items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
+
+    // evitar duplicados
+    if(items.includes(id)){ alert("Ya está en el setlist."); return; }
+
+    items.push(id);
+    await setDoc(setRef,{ items },{ merge:true });
+  };
+
+  window.clearSet = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!confirm("¿Vaciar setlist?")) return;
+    await setDoc(setRef,{ items:[] },{ merge:true });
+  };
+
+  /* ================== Listeners Firestore ================== */
+  onSnapshot(collection(db,"songs"), (snap)=>{
+    netStatus.textContent = "✅ Conectado (Firebase)";
+    netStatus.className = "status ok";
+
+    songsCache.clear();
+    songListEl.innerHTML = "";
+    songPickerEl.innerHTML = "";
+
+    snap.forEach(docu=>{
+      const d = docu.data();
+      if(d.deleted) return;
+
+      songsCache.set(docu.id, d);
+
+      // lista biblioteca
+      const div=document.createElement("div");
+      div.className="list-item";
+      const tonal = (d.key||"") + (d.mode==="minor" ? "m" : "");
+      div.innerHTML = `
+        <div>
+          <div><b>${escapeHtml(d.title||"(Sin título)")}</b></div>
+          <div style="font-size:12px;color:#666">Tono: ${escapeHtml(tonal)}</div>
+        </div>
+        <button onclick="loadSong('${docu.id}')">Abrir</button>
+      `;
+      songListEl.appendChild(div);
+
+      // picker setlist
+      const opt=document.createElement("option");
+      opt.value=docu.id;
+      opt.textContent=d.title || "(Sin título)";
+      songPickerEl.appendChild(opt);
+    });
+  }, (err)=>{
+    console.error(err);
+    netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
+    netStatus.className = "status warn";
+  });
+
+  onSnapshot(setRef, async (snap)=>{
+    setListEl.innerHTML = "";
+    const items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
+    if(items.length===0){
+      setListEl.innerHTML = `<div style="color:#666;font-size:12px">No hay canciones en el setlist.</div>`;
+      return;
+    }
+
+    for(const id of items){
+      const d = songsCache.get(id);
+      const name = d?.title || id;
+      const div=document.createElement("div");
+      div.className="list-item";
+      div.innerHTML = `<span>${escapeHtml(name)}</span>`;
+      setListEl.appendChild(div);
+    }
+  });
+
+  // intentar auto desbloqueo si había clave guardada
+  if(savedKey && savedKey.trim() === EDIT_KEY_MASTER){
+    setUnlocked(true);
+  } else {
+    setUnlocked(false);
+  }
+
+  function escapeHtml(str){
+    return (str||"").replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[s]));
+  }
 </script>
+
 </body>
 </html>
