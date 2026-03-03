@@ -46,13 +46,16 @@
     margin:0;
   }
 
+  /* ===== PRINT (sin duplicados y sin cortes) ===== */
   @media print{
     .tabs,.no-print{display:none !important}
     body{max-width:none;margin:0}
     .card{border:none;padding:0}
 
+    /* ocultar la vista de pantalla para que no duplique */
     #setOrder, #setSongs{display:none !important;}
 
+    /* imprimir solo el área de impresión */
     #printArea{display:block !important;}
     #printArea.hidden{display:block !important;}
 
@@ -90,6 +93,7 @@
   <button onclick="showTab('config')">Configuración</button>
 </div>
 
+<!-- BIBLIOTECA -->
 <div id="library" class="card">
   <h3 style="margin:0 0 10px">Agregar / Editar canción</h3>
 
@@ -130,6 +134,7 @@
     <button onclick="clearForm()">Nueva</button>
   </div>
 
+  <!-- TRANSPOSE (preview) -->
   <div style="margin-top:12px;border-top:1px dashed #ddd;padding-top:12px">
     <h3 style="margin:0 0 8px">Transposición (vista previa)</h3>
 
@@ -146,25 +151,31 @@
     </div>
 
     <label style="display:block;margin-top:10px"><b>Resultado transpuesto</b></label>
-    <textarea id="transposedOut" readonly></textarea>
+    <textarea id="transposedOut" readonly placeholder="Aquí verás la canción transpuesta"></textarea>
 
-    <div class="muted">Vista previa (no cambia lo guardado).</div>
+    <div class="muted">Esto solo es vista previa. No cambia la canción guardada.</div>
   </div>
 
   <h3 style="margin:18px 0 10px">Biblioteca</h3>
   <div id="songList"></div>
 </div>
 
+<!-- SETLIST HOY -->
 <div id="today" class="card hidden">
   <div class="grid2 no-print">
     <div>
       <h3 style="margin:0 0 10px">Agregar al Setlist (compartido)</h3>
+
       <div class="mini">
         <select id="songPicker" style="flex:1;min-width:240px"></select>
         <button onclick="addToSet()">Agregar</button>
         <button onclick="clearSet()">Vaciar</button>
       </div>
-      <div class="muted">Cada canción puede tener su propio <b>Tocar en</b> (y si es menor se muestra con “m”).</div>
+
+      <div class="muted">
+        Cada canción puede tener su propio <b>Tocar en</b>. Si la canción es menor, verás “m” (Ej: Gm).
+      </div>
+
       <div class="mini" style="margin-top:10px">
         <button onclick="printSetlist()">🖨️ Imprimir setlist</button>
       </div>
@@ -178,28 +189,36 @@
   </div>
 
   <hr class="no-print" style="margin:16px 0;border:none;border-top:1px solid #eee">
-  <h3 style="margin:0 0 10px">Canciones del Setlist</h3>
+
+  <h3 style="margin:0 0 10px">Canciones del Setlist (ACORDES + CANCIÓN)</h3>
   <div id="setSongs"></div>
 
+  <!-- PRINT AREA (solo se imprime esto) -->
   <div id="printArea" class="hidden">
     <div id="printBlocks"></div>
   </div>
 </div>
 
+<!-- CONFIG -->
 <div id="config" class="card hidden">
   <h3 style="margin:0 0 10px">Clave de edición</h3>
+
   <input id="editKeyInput" placeholder="Escribí la clave" style="width:100%">
   <div class="mini no-print">
     <button onclick="unlock()">Desbloquear</button>
     <button onclick="lockEdit()">Bloquear</button>
   </div>
-  <p class="muted">Clave para permitir Guardar/Eliminar y cambios del setlist.</p>
+
+  <p class="muted">
+    Clave de edición para permitir Guardar/Eliminar y cambios del setlist.
+  </p>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+  /* ================== TU FIREBASE ================== */
   const firebaseConfig = {
     apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
     authDomain: "cancionero-compartido.firebaseapp.com",
@@ -211,8 +230,10 @@
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
+  /* ================== CLAVE ================== */
   const EDIT_KEY_MASTER = "CFVN2026";
 
+  /* ================== UI refs ================== */
   const netStatus = document.getElementById("netStatus");
   const editStatus = document.getElementById("editStatus");
 
@@ -236,11 +257,13 @@
 
   const printBlocks = document.getElementById("printBlocks");
 
+  /* ================== Estado ================== */
   let unlocked = false;
   let currentId = null;
-  let songsCache = new Map();
-  let setToday = [];
+  let songsCache = new Map(); // id -> song data
+  let setToday = [];          // [{id,toKey}]
 
+  /* ================== Guardar clave local ================== */
   const LS_KEY = "cancionero_editkey";
   const savedKey = localStorage.getItem(LS_KEY);
   if(savedKey) editKeyInputEl.value = savedKey;
@@ -252,9 +275,11 @@
     renderSetlist();
   }
 
+  /* ================== Tonos ================== */
   const NOTES_SHARPS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
   const NOTES_FLATS  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
   const KEY_OPTIONS  = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
+
   const NOTE_TO_INDEX = (() => {
     const map = new Map();
     NOTES_SHARPS.forEach((n,i)=>map.set(n,i));
@@ -270,13 +295,18 @@
       sel.appendChild(o);
     });
   }
+
   buildKeySelect(keyEl);
   buildKeySelect(toKeySel);
-  keyEl.value="C"; modeEl.value="major"; preferEl.value="sharps"; toKeySel.value="C";
+  keyEl.value = "C";
+  modeEl.value = "major";
+  preferEl.value = "sharps";
+  toKeySel.value = "C";
 
   function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
   function modeLabel(mode){ return mode==="minor" ? "Menor" : "Mayor"; }
 
+  /* ================== Transposición ================== */
   const CHORD_TOKEN = /^([A-G](?:#|b)?)([^A-G\/\s]*)(?:\/([A-G](?:#|b)?))?$/;
 
   function normalizeNote(note){
@@ -285,12 +315,14 @@
     if(note.length===1) return note.toUpperCase();
     return note[0].toUpperCase()+note.slice(1);
   }
+
   function semitoneDistance(fromKey,toKey){
     const a=NOTE_TO_INDEX.get(normalizeNote(fromKey));
     const b=NOTE_TO_INDEX.get(normalizeNote(toKey));
     if(a===undefined||b===undefined) return 0;
     return b-a;
   }
+
   function transposeNote(note,semitones,prefer){
     note=normalizeNote(note);
     const idx=NOTE_TO_INDEX.get(note);
@@ -299,6 +331,7 @@
     const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
     return palette[newIdx];
   }
+
   function isChordToken(token){
     token = token.trim();
     if(!token) return false;
@@ -308,6 +341,7 @@
     if(!m) return false;
     return NOTE_TO_INDEX.has(normalizeNote(m[1]));
   }
+
   function transposeChordToken(token, shift, prefer){
     const punct = (token.match(/[.,;:!?]+$/) || [""])[0];
     const core  = punct ? token.slice(0,-punct.length) : token;
@@ -320,6 +354,7 @@
     const out = newBass ? `${newRoot}${suffix}/${newBass}` : `${newRoot}${suffix}`;
     return out + punct;
   }
+
   function lineLooksLikeChords(line){
     const parts = line.split(/(\s+|[|]+)/);
     const tokens = parts.filter((_,i)=>i%2===0).map(x=>x.trim()).filter(Boolean);
@@ -332,8 +367,10 @@
       for(const s of sub) if(isChordToken(s)) ok++;
       if(ok>0 && ok/sub.length>=0.6) chordCount++;
     }
-    return (chordCount / tokens.length) >= 0.6;
+    const ratio = chordCount / tokens.length;
+    return tokens.length>=1 && ratio>=0.6;
   }
+
   function transposeChordLine(line, shift, prefer){
     return line.split(/(\s+|[|]+)/).map(part=>{
       if(part.match(/^\s+$|^[|]+$/)) return part;
@@ -343,6 +380,7 @@
       }).join("-");
     }).join("");
   }
+
   function transposeAuto(text, fromKey, toKey, prefer){
     const shift = semitoneDistance(fromKey, toKey);
     if(!text) return "";
@@ -351,29 +389,35 @@
     }).join("\n");
   }
 
+  /* ======= extraer solo acordes (del texto ya transpuesto) ======= */
   function extractChordsOnly(transposedText){
     const lines = (transposedText || "").split("\n");
     const chordLines = [];
+
     for(const line of lines){
       if(lineLooksLikeChords(line)){
         chordLines.push(line.trim().replace(/\s{2,}/g," "));
       }
     }
-    if(chordLines.length===0){
+
+    if(chordLines.length === 0){
       const found = (transposedText || "").match(/\b([A-G](?:#|b)?)(?:maj|min|m|sus|dim|aug|add)?\d*(?:\/[A-G](?:#|b)?)?\b/g);
       if(found && found.length){
-        const clean=[]; for(const c of found){ if(clean.at(-1)!==c) clean.push(c); }
+        const clean = [];
+        for(const c of found){ if(clean.at(-1)!==c) clean.push(c); }
         return clean.join(" - ");
       }
       return "(No se detectaron líneas de acordes)";
     }
-    const compact=[]; for(const ln of chordLines){ if(compact.at(-1)!==ln) compact.push(ln); }
+
+    const compact = [];
+    for(const ln of chordLines){ if(compact.at(-1)!==ln) compact.push(ln); }
     return compact.join("\n");
   }
 
   function updateTransposePreview(){
     const from = keyEl.value || "C";
-    fromKeyView.value = from + modeSuffix(modeEl.value) + " ("+modeLabel(modeEl.value)+")";
+    fromKeyView.value = `${from}${modeSuffix(modeEl.value)} (${modeLabel(modeEl.value)})`;
     const to = toKeySel.value || "C";
     const prefer = preferEl.value || "sharps";
     transposedOut.value = transposeAuto(bodyEl.value || "", from, to, prefer);
@@ -385,6 +429,122 @@
   preferEl.addEventListener("change", updateTransposePreview);
   toKeySel.addEventListener("change", updateTransposePreview);
 
+  /* ================== DETECTOR AUTOMÁTICO (Mayor/Menor) ================== */
+  function extractChordsFromText(text){
+    const chords = [];
+    const lines = (text||"").split("\n");
+    for(const line of lines){
+      if(!lineLooksLikeChords(line)) continue;
+      const parts = line.split(/(\s+|[|]+)/).filter(p => p && !p.match(/^\s+$|^[|]+$/));
+      for(const part of parts){
+        const subs = part.split("-").map(x=>x.trim()).filter(Boolean);
+        for(const s of subs){
+          if(isChordToken(s)) chords.push(s);
+        }
+      }
+    }
+    return chords;
+  }
+
+  function chordRootPC(chord){
+    const m = chord.match(/^([A-G](?:#|b)?)/);
+    if(!m) return null;
+    const root = normalizeNote(m[1]);
+    const idx = NOTE_TO_INDEX.get(root);
+    return (idx===undefined) ? null : idx;
+  }
+
+  function chordQuality(chord){
+    const m = chord.match(/^([A-G](?:#|b)?)(.*)$/);
+    if(!m) return "unknown";
+    const rest = (m[2]||"");
+    if(rest.startsWith("m") && !rest.startsWith("maj")) return "minor";
+    return "major_or_other";
+  }
+
+  function expectedScalePCs(keyPC, mode){
+    const MAJ = [0,2,4,5,7,9,11];
+    const MIN = [0,2,3,5,7,8,10];
+    const scale = (mode==="major") ? MAJ : MIN;
+    return new Set(scale.map(s => (keyPC+s)%12));
+  }
+
+  function scoreKeyCandidate(chords, keyPC, mode){
+    if(chords.length===0) return -999;
+
+    const counts = new Array(12).fill(0);
+    let minorCount=0, majorCount=0;
+
+    for(const c of chords){
+      const pc = chordRootPC(c);
+      if(pc===null) continue;
+      counts[pc]++;
+
+      const q = chordQuality(c);
+      if(q==="minor") minorCount++;
+      else if(q==="major_or_other") majorCount++;
+    }
+
+    const expected = expectedScalePCs(keyPC, mode);
+    let score = 0;
+
+    for(let pc=0; pc<12; pc++){
+      if(expected.has(pc)) score += counts[pc]*2;
+      else score -= counts[pc]*1.2;
+    }
+
+    score += counts[keyPC] * 4;
+    const V = (keyPC + 7) % 12;
+    score += counts[V] * 2.5;
+
+    const totalQual = minorCount + majorCount;
+    if(totalQual>0){
+      const minorRatio = minorCount / totalQual;
+      if(mode==="minor") score += minorRatio * 6;
+      else score += (1-minorRatio) * 2;
+    }
+
+    return score;
+  }
+
+  function detectKeyAndMode(text, prefer){
+    const chords = extractChordsFromText(text);
+
+    if(chords.length === 0){
+      return { ok:false, reason:"No encontré líneas claras de acordes. Tip: poné los acordes en líneas separadas." };
+    }
+
+    let best = { score:-Infinity, keyPC:0, mode:"major" };
+
+    for(let keyPC=0; keyPC<12; keyPC++){
+      const sMaj = scoreKeyCandidate(chords, keyPC, "major");
+      if(sMaj > best.score) best = { score:sMaj, keyPC, mode:"major" };
+
+      const sMin = scoreKeyCandidate(chords, keyPC, "minor");
+      if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
+    }
+
+    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
+    return { ok:true, key: palette[best.keyPC], mode: best.mode, chordsFound: chords.length };
+  }
+
+  window.detectKeyAdvanced = function(){
+    const prefer = preferEl.value || "sharps";
+    const res = detectKeyAndMode(bodyEl.value || "", prefer);
+
+    if(!res.ok){
+      alert(res.reason);
+      return;
+    }
+
+    keyEl.value = res.key;
+    modeEl.value = res.mode;
+
+    alert(`Detectado: ${res.key}${modeSuffix(res.mode)} (${modeLabel(res.mode)}) • Acordes analizados: ${res.chordsFound}`);
+    updateTransposePreview();
+  };
+
+  /* ================== Helpers ================== */
   function escapeHtml(str){
     return (str||"").replace(/[&<>"']/g, s => ({
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -392,6 +552,7 @@
   }
   function getSong(id){ return songsCache.get(id) || null; }
 
+  /* ================== Tabs / Config ================== */
   window.showTab = function(name){
     document.getElementById("library").classList.add("hidden");
     document.getElementById("today").classList.add("hidden");
@@ -418,12 +579,98 @@
     setUnlocked(false);
   };
 
+  /* ================== Biblioteca (Guardar/Eliminar/Cargar) ================== */
+  window.clearForm = function(){
+    currentId = null;
+    titleEl.value = "";
+    bodyEl.value = "";
+    keyEl.value = "C";
+    modeEl.value = "major";
+    preferEl.value = "sharps";
+    toKeySel.value = "C";
+    updateTransposePreview();
+  };
+
+  window.saveSong = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const title = (titleEl.value || "").trim();
+    const body  = (bodyEl.value || "").trim();
+    if(!title && !body){ alert("Poné título o contenido."); return; }
+
+    const id = currentId || (crypto.randomUUID ? crypto.randomUUID() : ("s_"+Date.now()+Math.random().toString(16).slice(2)));
+
+    await setDoc(doc(db,"songs",id),{
+      title,
+      key: keyEl.value,
+      mode: modeEl.value,
+      prefer: preferEl.value,
+      body,
+      deleted: false
+    }, { merge:true });
+
+    currentId = id;
+    alert("✅ Guardado (compartido)");
+  };
+
+  window.deleteSong = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!currentId){ alert("No hay canción cargada."); return; }
+    if(!confirm("¿Eliminar esta canción?")) return;
+
+    await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
+
+    // quitar del setlist si estaba
+    setToday = setToday.filter(x=>x.id!==currentId);
+    await saveSetlist();
+
+    window.clearForm();
+  };
+
+  window.loadSong = async function(id){
+    const snap = await getDoc(doc(db,"songs",id));
+    if(!snap.exists()) return;
+    const d = snap.data();
+    currentId = id;
+    titleEl.value = d.title || "";
+    keyEl.value   = d.key || "C";
+    modeEl.value  = d.mode || "major";
+    preferEl.value= d.prefer || "sharps";
+    bodyEl.value  = d.body || "";
+    updateTransposePreview();
+    window.showTab("library");
+  };
+
+  /* ================== Setlist compartido ================== */
+  const setRef = doc(db,"shared","today");
+
+  function normalizeSetItems(items){
+    if(!Array.isArray(items)) return [];
+    if(items.length===0) return [];
+    if(typeof items[0] === "string"){
+      return items.map(id=>({id, toKey:"C"}));
+    }
+    return items
+      .filter(x=>x && typeof x.id === "string")
+      .map(x=>({ id:x.id, toKey: x.toKey || "C" }));
+  }
+
+  async function saveSetlist(){
+    await setDoc(setRef, { items: setToday }, { merge:true });
+  }
+
   window.addToSet = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
     const id = songPickerEl.value;
     if(!id){ alert("Elegí una canción."); return; }
     if(setToday.some(x=>x.id===id)){ alert("Ya está en el setlist."); return; }
     setToday = [...setToday, {id, toKey:"C"}];
+    await saveSetlist();
+  };
+
+  window.clearSet = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!confirm("¿Vaciar setlist?")) return;
+    setToday = [];
     await saveSetlist();
   };
 
@@ -462,28 +709,9 @@
     await saveSetlist();
   };
 
-  window.clearSet = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    if(!confirm("¿Vaciar setlist?")) return;
-    setToday = [];
-    await saveSetlist();
-  };
-
   window.printSetlist = function(){
     window.print();
   };
-
-  const setRef = doc(db,"shared","today");
-
-  function normalizeSetItems(items){
-    if(!Array.isArray(items)) return [];
-    if(items.length===0) return [];
-    if(typeof items[0] === "string") return items.map(id=>({id, toKey:"C"}));
-    return items.filter(x=>x && typeof x.id==="string").map(x=>({id:x.id, toKey:x.toKey||"C"}));
-  }
-  async function saveSetlist(){
-    await setDoc(setRef, { items: setToday }, { merge:true });
-  }
 
   function renderSetlist(){
     setOrderEl.innerHTML = "";
@@ -498,18 +726,22 @@
       const isMin = (s.mode==="minor");
       const originalKeyLabel = (s.key||"C") + (isMin ? "m" : "");
       const toKeyRaw = entry.toKey || "C";
-      const toKeyLabel = toKeyRaw + (isMin ? "m" : ""); // ✅ AQUÍ la corrección
+      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
       const prefer = s.prefer || "sharps";
 
       const transposed = transposeAuto(s.body||"", s.key||"C", toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
 
+      // Orden / controles
       const row = document.createElement("div");
       row.className = "list-item";
       row.innerHTML = `
         <div>
           <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
-          <div class="muted">Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) • Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})</div>
+          <div class="muted">
+            Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+            Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+          </div>
         </div>
         <div class="mini">
           <label class="muted" style="margin:0">Tocar en:</label>
@@ -526,11 +758,15 @@
       sel.value = toKeyRaw;
       sel.addEventListener("change", ()=> window.setToKey(entry.id, sel.value));
 
+      // Vista en pantalla (ACORDES + CANCIÓN)
       const box = document.createElement("div");
       box.className = "songbox";
       box.innerHTML = `
         <h4>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</h4>
-        <div class="songmeta">Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) • Tocar en: <b>${escapeHtml(toKeyLabel)}</b> (${modeLabel(s.mode)})</div>
+        <div class="songmeta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: <b>${escapeHtml(toKeyLabel)}</b> (${modeLabel(s.mode)})
+        </div>
 
         <div class="print-chords-title">ACORDES</div>
         <div class="chordsOnly">${escapeHtml(chordsOnly)}</div>
@@ -540,11 +776,15 @@
       `;
       setSongsEl.appendChild(box);
 
+      // Bloque impresión (solo se imprime esto)
       const block = document.createElement("div");
       block.className = "print-block";
       block.innerHTML = `
         <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
-        <div class="print-meta">Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) • Tocar en: ${escapeHtml(toKeyLabel)} (${modeLabel(s.mode)})</div>
+        <div class="print-meta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: ${escapeHtml(toKeyLabel)} (${modeLabel(s.mode)})
+        </div>
 
         <div class="print-chords-title">ACORDES</div>
         <div class="print-chords">${escapeHtml(chordsOnly)}</div>
@@ -557,6 +797,7 @@
     });
   }
 
+  /* ================== Firestore listeners ================== */
   onSnapshot(collection(db,"songs"), (snap)=>{
     netStatus.textContent = "✅ Conectado (Firebase)";
     netStatus.className = "status ok";
@@ -568,6 +809,7 @@
     snap.forEach(docu=>{
       const d = docu.data();
       if(d.deleted) return;
+
       songsCache.set(docu.id, d);
 
       const tonal = (d.key||"") + (d.mode==="minor" ? "m" : "");
@@ -592,69 +834,31 @@
 
     updateTransposePreview();
     renderSetlist();
+  }, (err)=>{
+    console.error(err);
+    netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
+    netStatus.className = "status warn";
   });
 
   onSnapshot(setRef, async (snap)=>{
     const itemsRaw = (snap.exists() ? snap.data()?.items : null);
     const normalized = normalizeSetItems(itemsRaw);
+
+    // Si venía en formato viejo, lo guardo ya convertido
     const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
     setToday = normalized;
+
     if(wasOld){
-      try { await setDoc(setRef, { items: setToday }, { merge:true }); } catch(e){}
+      try { await saveSetlist(); } catch(e){ console.warn("No pude migrar setlist:", e); }
     }
     renderSetlist();
   });
 
-  // Auto desbloqueo
+  // auto-desbloqueo si ya guardaste la clave correcta
   if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
   else setUnlocked(false);
 
   updateTransposePreview();
-
-  // ====== funciones de biblioteca mínimas (guardar/eliminar/cargar) ======
-  window.saveSong = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    const title = (titleEl.value || "").trim();
-    const body  = (bodyEl.value || "").trim();
-    if(!title && !body){ alert("Poné título o contenido."); return; }
-    const id = currentId || (crypto.randomUUID ? crypto.randomUUID() : ("s_"+Date.now()+Math.random().toString(16).slice(2)));
-    await setDoc(doc(db,"songs",id),{
-      title, key:keyEl.value, mode:modeEl.value, prefer:preferEl.value, body, deleted:false
-    }, { merge:true });
-    currentId = id;
-    alert("✅ Guardado");
-  };
-
-  window.clearForm = function(){
-    currentId=null;
-    titleEl.value=""; bodyEl.value="";
-    keyEl.value="C"; modeEl.value="major"; preferEl.value="sharps"; toKeySel.value="C";
-    updateTransposePreview();
-  };
-
-  window.deleteSong = async function(){
-    if(!unlocked){ alert("Bloqueado."); return; }
-    if(!currentId){ alert("No hay canción cargada."); return; }
-    if(!confirm("¿Eliminar esta canción?")) return;
-    await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
-    setToday = setToday.filter(x=>x.id!==currentId);
-    await saveSetlist();
-    window.clearForm();
-  };
-
-  window.loadSong = async function(id){
-    const snap = await getDoc(doc(db,"songs",id));
-    if(!snap.exists()) return;
-    const d = snap.data();
-    currentId = id;
-    titleEl.value = d.title || "";
-    keyEl.value   = d.key || "C";
-    modeEl.value  = d.mode || "major";
-    preferEl.value= d.prefer || "sharps";
-    bodyEl.value  = d.body || "";
-    updateTransposePreview();
-    window.showTab("library");
-  };
 </script>
 
 </body>
