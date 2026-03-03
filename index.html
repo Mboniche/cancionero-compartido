@@ -46,6 +46,20 @@
     margin:0;
   }
 
+  /* Drag & drop visual */
+  .drag-handle{
+    font-size:18px;
+    padding:4px 8px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    background:#fff;
+    cursor:grab;
+    user-select:none;
+    line-height:1;
+  }
+  .dragging{opacity:.55}
+  .drop-target{outline:2px dashed #999; outline-offset:4px}
+
   /* ===== PRINT (sin duplicados y sin cortes) ===== */
   @media print{
     .tabs,.no-print{display:none !important}
@@ -173,7 +187,8 @@
       </div>
 
       <div class="muted">
-        Cada canción puede tener su propio <b>Tocar en</b>. Si la canción es menor, verás “m” (Ej: Gm).
+        Ahora por defecto queda en el <b>tono original</b>. En el selector aparece primero el original y debajo los demás tonos.
+        <br>Para reordenar: <b>modo edición</b> → arrastrar con el icono ⠿.
       </div>
 
       <div class="mini" style="margin-top:10px">
@@ -263,6 +278,9 @@
   let songsCache = new Map(); // id -> song data
   let setToday = [];          // [{id,toKey}]
 
+  /* drag state */
+  let dragId = null;
+
   /* ================== Guardar clave local ================== */
   const LS_KEY = "cancionero_editkey";
   const savedKey = localStorage.getItem(LS_KEY);
@@ -292,6 +310,18 @@
     KEY_OPTIONS.forEach(k=>{
       const o=document.createElement("option");
       o.value=k; o.textContent=k;
+      sel.appendChild(o);
+    });
+  }
+
+  function buildToKeySelect(sel, originalKey){
+    // original primero, luego el resto
+    const orig = originalKey || "C";
+    const list = [orig, ...KEY_OPTIONS.filter(k=>k!==orig)];
+    sel.innerHTML = "";
+    list.forEach(k=>{
+      const o=document.createElement("option");
+      o.value=k; o.textContent=k + (k===orig ? " (original)" : "");
       sel.appendChild(o);
     });
   }
@@ -429,7 +459,7 @@
   preferEl.addEventListener("change", updateTransposePreview);
   toKeySel.addEventListener("change", updateTransposePreview);
 
-  /* ================== DETECTOR AUTOMÁTICO (Mayor/Menor) ================== */
+  /* ================== DETECTOR AUTOMÁTICO (Mayor/Menor) — mejorado ================== */
   function extractChordsFromText(text){
     const chords = [];
     const lines = (text||"").split("\n");
@@ -475,9 +505,11 @@
     const counts = new Array(12).fill(0);
     let minorCount=0, majorCount=0;
 
+    const pcsInOrder = [];
     for(const c of chords){
       const pc = chordRootPC(c);
       if(pc===null) continue;
+      pcsInOrder.push(pc);
       counts[pc]++;
 
       const q = chordQuality(c);
@@ -493,10 +525,18 @@
       else score -= counts[pc]*1.2;
     }
 
+    // tónica y dominante
     score += counts[keyPC] * 4;
     const V = (keyPC + 7) % 12;
     score += counts[V] * 2.5;
 
+    // primer y último acorde (muy importante)
+    const first = pcsInOrder[0];
+    const last  = pcsInOrder[pcsInOrder.length-1];
+    if(first===keyPC) score += 5;
+    if(last===keyPC)  score += 8;
+
+    // tendencia menor/mayor
     const totalQual = minorCount + majorCount;
     if(totalQual>0){
       const minorRatio = minorCount / totalQual;
@@ -515,13 +555,27 @@
     }
 
     let best = { score:-Infinity, keyPC:0, mode:"major" };
+    let bestMaj = { score:-Infinity, keyPC:0, mode:"major" };
+    let bestMin = { score:-Infinity, keyPC:0, mode:"minor" };
 
     for(let keyPC=0; keyPC<12; keyPC++){
       const sMaj = scoreKeyCandidate(chords, keyPC, "major");
+      if(sMaj > bestMaj.score) bestMaj = { score:sMaj, keyPC, mode:"major" };
       if(sMaj > best.score) best = { score:sMaj, keyPC, mode:"major" };
 
       const sMin = scoreKeyCandidate(chords, keyPC, "minor");
+      if(sMin > bestMin.score) bestMin = { score:sMin, keyPC, mode:"minor" };
       if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
+    }
+
+    // Heurística anti “relativo menor”:
+    // Si gana el menor, pero el mayor relativo está muy cerca, preferimos el mayor.
+    if(best.mode==="minor"){
+      const relMaj = (best.keyPC + 3) % 12; // Am -> C
+      const relMajScore = scoreKeyCandidate(chords, relMaj, "major");
+      if(relMajScore >= best.score * 0.92){ // “muy cerca”
+        best = { score: relMajScore, keyPC: relMaj, mode: "major" };
+      }
     }
 
     const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
@@ -619,7 +673,6 @@
 
     await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
 
-    // quitar del setlist si estaba
     setToday = setToday.filter(x=>x.id!==currentId);
     await saveSetlist();
 
@@ -647,11 +700,11 @@
     if(!Array.isArray(items)) return [];
     if(items.length===0) return [];
     if(typeof items[0] === "string"){
-      return items.map(id=>({id, toKey:"C"}));
+      return items.map(id=>({id, toKey:null}));
     }
     return items
       .filter(x=>x && typeof x.id === "string")
-      .map(x=>({ id:x.id, toKey: x.toKey || "C" }));
+      .map(x=>({ id:x.id, toKey: x.toKey ?? null }));
   }
 
   async function saveSetlist(){
@@ -663,7 +716,10 @@
     const id = songPickerEl.value;
     if(!id){ alert("Elegí una canción."); return; }
     if(setToday.some(x=>x.id===id)){ alert("Ya está en el setlist."); return; }
-    setToday = [...setToday, {id, toKey:"C"}];
+
+    const s = getSong(id);
+    const defaultTo = s?.key || "C"; // ✅ ahora por defecto: tono original
+    setToday = [...setToday, {id, toKey: defaultTo}];
     await saveSetlist();
   };
 
@@ -683,26 +739,6 @@
     renderSetlist();
   };
 
-  window.moveUp = async function(id){
-    if(!unlocked) return;
-    const i = setToday.findIndex(x=>x.id===id);
-    if(i<=0) return;
-    const arr = setToday.slice();
-    [arr[i-1], arr[i]] = [arr[i], arr[i-1]];
-    setToday = arr;
-    await saveSetlist();
-  };
-
-  window.moveDown = async function(id){
-    if(!unlocked) return;
-    const i = setToday.findIndex(x=>x.id===id);
-    if(i<0 || i>=setToday.length-1) return;
-    const arr = setToday.slice();
-    [arr[i+1], arr[i]] = [arr[i], arr[i+1]];
-    setToday = arr;
-    await saveSetlist();
-  };
-
   window.removeFromSet = async function(id){
     if(!unlocked) return;
     setToday = setToday.filter(x=>x.id!==id);
@@ -712,6 +748,58 @@
   window.printSetlist = function(){
     window.print();
   };
+
+  /* ================== Drag & Drop reorder ================== */
+  async function reorderSetlist(draggedId, targetId){
+    if(!unlocked) return;
+
+    const from = setToday.findIndex(x=>x.id===draggedId);
+    const to   = setToday.findIndex(x=>x.id===targetId);
+    if(from<0 || to<0 || from===to) return;
+
+    const arr = setToday.slice();
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setToday = arr;
+
+    await saveSetlist();
+    renderSetlist();
+  }
+
+  function attachDragHandlers(row){
+    if(!unlocked) return;
+
+    row.addEventListener("dragstart", (e)=>{
+      dragId = row.dataset.id;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragId);
+    });
+
+    row.addEventListener("dragend", ()=>{
+      dragId = null;
+      row.classList.remove("dragging");
+      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
+    });
+
+    row.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      row.classList.add("drop-target");
+      e.dataTransfer.dropEffect = "move";
+    });
+
+    row.addEventListener("dragleave", ()=>{
+      row.classList.remove("drop-target");
+    });
+
+    row.addEventListener("drop", async (e)=>{
+      e.preventDefault();
+      row.classList.remove("drop-target");
+      const dragged = e.dataTransfer.getData("text/plain") || dragId;
+      const target = row.dataset.id;
+      await reorderSetlist(dragged, target);
+    });
+  }
 
   function renderSetlist(){
     setOrderEl.innerHTML = "";
@@ -724,37 +812,50 @@
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
-      const originalKeyLabel = (s.key||"C") + (isMin ? "m" : "");
-      const toKeyRaw = entry.toKey || "C";
+      const originalKey = s.key || "C";
+
+      // ✅ si venía viejo / null → usamos original como default (sin forzar guardar)
+      const toKeyRaw = entry.toKey || originalKey;
+
+      const originalKeyLabel = originalKey + (isMin ? "m" : "");
       const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
       const prefer = s.prefer || "sharps";
 
-      const transposed = transposeAuto(s.body||"", s.key||"C", toKeyRaw, prefer);
+      const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
 
       // Orden / controles
       const row = document.createElement("div");
       row.className = "list-item";
+      row.dataset.id = entry.id;
+
+      // draggable solo en modo edición
+      row.draggable = !!unlocked;
+
       row.innerHTML = `
-        <div>
-          <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
-          <div class="muted">
-            Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
-            Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="drag-handle" title="${unlocked ? "Arrastrar para ordenar" : "Activa modo edición para arrastrar"}">⠿</span>
+          <div>
+            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
+            <div class="muted">
+              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+            </div>
           </div>
         </div>
         <div class="mini">
           <label class="muted" style="margin:0">Tocar en:</label>
-          <select data-id="${entry.id}" ${unlocked ? "" : "disabled"} style="min-width:90px"></select>
-          <button onclick="moveUp('${entry.id}')" ${unlocked ? "" : "disabled"}>↑</button>
-          <button onclick="moveDown('${entry.id}')" ${unlocked ? "" : "disabled"}>↓</button>
+          <select data-id="${entry.id}" ${unlocked ? "" : "disabled"} style="min-width:170px"></select>
           <button onclick="removeFromSet('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
         </div>
       `;
       setOrderEl.appendChild(row);
 
+      // activar drag handlers
+      attachDragHandlers(row);
+
       const sel = row.querySelector("select");
-      buildKeySelect(sel);
+      buildToKeySelect(sel, originalKey);  // ✅ original primero
       sel.value = toKeyRaw;
       sel.addEventListener("change", ()=> window.setToKey(entry.id, sel.value));
 
@@ -844,7 +945,6 @@
     const itemsRaw = (snap.exists() ? snap.data()?.items : null);
     const normalized = normalizeSetItems(itemsRaw);
 
-    // Si venía en formato viejo, lo guardo ya convertido
     const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
     setToday = normalized;
 
@@ -863,4 +963,3 @@
 
 </body>
 </html>
-
