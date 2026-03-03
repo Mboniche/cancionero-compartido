@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cancionero Compartido</title>
 <style>
   body{font-family:system-ui,Arial;margin:20px;max-width:1100px}
@@ -13,10 +13,12 @@
   input,select,button{padding:8px;margin-top:6px;border-radius:10px;border:1px solid #ccc}
   .card{border:1px solid #ddd;padding:15px;border-radius:12px;margin-top:15px}
   .list-item{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .mini{display:flex;gap:8px;flex-wrap:wrap}
+  .mini{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .status{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #ddd;font-size:12px}
   .ok{border-color:#bfe7c9;color:#0a7a2f}
   .warn{border-color:#ffe1b5;color:#b45f06}
+  .muted{color:#666;font-size:12px;line-height:1.35;margin-top:6px}
+  .pill{display:inline-block;border:1px solid #ddd;padding:2px 8px;border-radius:999px;font-size:12px;color:#333;background:#fff}
 </style>
 </head>
 <body>
@@ -42,7 +44,7 @@
 
   <div class="mini">
     <div style="flex:1;min-width:160px">
-      <label><b>Tono original</b></label><br>
+      <label><b>Tono original (raíz)</b></label><br>
       <select id="key" style="width:100%"></select>
     </div>
 
@@ -53,9 +55,17 @@
         <option value="minor">Menor</option>
       </select>
     </div>
+
+    <div style="flex:1;min-width:160px">
+      <label><b>Preferencia</b></label><br>
+      <select id="prefer" style="width:100%">
+        <option value="sharps">Sostenidos (#)</option>
+        <option value="flats">Bemoles (b)</option>
+      </select>
+    </div>
   </div>
 
-  <button onclick="detectKey()">🎯 Detectar tono automáticamente</button>
+  <button onclick="detectKeyAdvanced()">🎯 Detectar tono automáticamente (mejorado)</button>
 
   <label style="display:block;margin-top:10px"><b>Letra + acordes</b></label>
   <textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
@@ -66,13 +76,35 @@
     <button onclick="clearForm()">Nueva</button>
   </div>
 
+  <!-- TRANSPOSE -->
+  <div style="margin-top:12px;border-top:1px dashed #ddd;padding-top:12px">
+    <h3 style="margin:0 0 8px">Transposición</h3>
+
+    <div class="mini">
+      <div style="flex:1;min-width:160px">
+        <label><b>Tono original (solo lectura)</b></label><br>
+        <input id="fromKeyView" readonly style="width:100%">
+      </div>
+
+      <div style="flex:1;min-width:160px">
+        <label><b>Transponer a</b></label><br>
+        <select id="toKey" style="width:100%"></select>
+      </div>
+    </div>
+
+    <label style="display:block;margin-top:10px"><b>Resultado transpuesto</b></label>
+    <textarea id="transposedOut" readonly placeholder="Aquí verás la canción transpuesta"></textarea>
+
+    <div class="muted">Esto solo es vista previa. No cambia la canción guardada.</div>
+  </div>
+
   <h3 style="margin:18px 0 10px">Biblioteca</h3>
   <div id="songList"></div>
 </div>
 
 <!-- SETLIST -->
 <div id="today" class="card hidden">
-  <h3 style="margin:0 0 10px">Agregar al Setlist</h3>
+  <h3 style="margin:0 0 10px">Agregar al Setlist (compartido)</h3>
 
   <div class="mini">
     <select id="songPicker" style="flex:1;min-width:240px"></select>
@@ -84,6 +116,7 @@
   <div id="setList"></div>
 
   <button onclick="window.print()">🖨️ Imprimir</button>
+  <div class="muted">Imprime el setlist (en esta versión imprime títulos; si querés imprimir la letra transpuesta por canción, te lo agrego).</div>
 </div>
 
 <!-- CONFIG -->
@@ -96,8 +129,8 @@
     <button onclick="lockEdit()">Bloquear</button>
   </div>
 
-  <p style="color:#666;font-size:12px;line-height:1.4;margin-top:10px">
-    La clave es un bloqueo “práctico” en la app. Para seguridad real al 100% se hace con usuarios (Firebase Auth).
+  <p class="muted">
+    Clave de edición para permitir Guardar/Eliminar y cambios del setlist.
   </p>
 </div>
 
@@ -120,7 +153,7 @@
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  /* ================== CLAVE (CAMBIA ESTO) ================== */
+  /* ================== CLAVE ================== */
   const EDIT_KEY_MASTER = "CFVN2026";
 
   /* ================== UI refs ================== */
@@ -130,6 +163,7 @@
   const titleEl = document.getElementById("title");
   const keyEl   = document.getElementById("key");
   const modeEl  = document.getElementById("mode");
+  const preferEl= document.getElementById("prefer");
   const bodyEl  = document.getElementById("body");
 
   const songListEl = document.getElementById("songList");
@@ -138,12 +172,16 @@
 
   const editKeyInputEl = document.getElementById("editKeyInput");
 
+  const fromKeyView = document.getElementById("fromKeyView");
+  const toKeySel = document.getElementById("toKey");
+  const transposedOut = document.getElementById("transposedOut");
+
   /* ================== Estado ================== */
   let unlocked = false;
   let currentId = null;
   let songsCache = new Map(); // id -> song data
 
-  // Guardar clave local para que no la metas cada vez
+  // Guardar clave local (opcional)
   const LS_KEY = "cancionero_editkey";
   const savedKey = localStorage.getItem(LS_KEY);
   if(savedKey) editKeyInputEl.value = savedKey;
@@ -154,19 +192,221 @@
     editStatus.className = "status " + (v ? "ok" : "warn");
   }
 
-  /* ================== Tonos ================== */
-  const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-  function buildKeys(){
-    keyEl.innerHTML = "";
-    NOTES.forEach(n=>{
+  /* ================== Tonos / selects ================== */
+  const NOTES_SHARPS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const NOTES_FLATS  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+  const KEY_OPTIONS  = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
+  const NOTE_TO_INDEX = (() => {
+    const map = new Map();
+    NOTES_SHARPS.forEach((n,i)=>map.set(n,i));
+    NOTES_FLATS.forEach((n,i)=>map.set(n,i));
+    return map;
+  })();
+
+  function buildKeySelect(sel){
+    sel.innerHTML = "";
+    KEY_OPTIONS.forEach(k=>{
       const o=document.createElement("option");
-      o.value=n; o.textContent=n;
-      keyEl.appendChild(o);
+      o.value=k; o.textContent=k;
+      sel.appendChild(o);
     });
   }
-  buildKeys();
+  buildKeySelect(keyEl);
+  buildKeySelect(toKeySel);
+  keyEl.value = "C";
+  modeEl.value = "major";
+  preferEl.value = "sharps";
+  toKeySel.value = "C";
 
-  /* ================== Funciones globales para onclick ================== */
+  /* ================== Transposición ================== */
+  const CHORD_TOKEN = /^([A-G](?:#|b)?)([^A-G\/\s]*)(?:\/([A-G](?:#|b)?))?$/;
+
+  function normalizeNote(note){
+    if(!note) return note;
+    note = note.trim();
+    if(note.length===1) return note.toUpperCase();
+    return note[0].toUpperCase()+note.slice(1);
+  }
+  function semitoneDistance(fromKey,toKey){
+    const a=NOTE_TO_INDEX.get(normalizeNote(fromKey));
+    const b=NOTE_TO_INDEX.get(normalizeNote(toKey));
+    if(a===undefined||b===undefined) return 0;
+    return b-a;
+  }
+  function transposeNote(note,semitones,prefer){
+    note=normalizeNote(note);
+    const idx=NOTE_TO_INDEX.get(note);
+    if(idx===undefined) return note;
+    let newIdx=(idx+semitones)%12;
+    if(newIdx<0) newIdx+=12;
+    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
+    return palette[newIdx];
+  }
+  function isChordToken(token){
+    token = token.trim();
+    if(!token) return false;
+    token = token.replace(/[.,;:!?]+$/g,"");
+    if(token.length>18) return false;
+    const m = token.match(CHORD_TOKEN);
+    if(!m) return false;
+    const root = normalizeNote(m[1]);
+    return NOTE_TO_INDEX.has(root);
+  }
+  function transposeChordToken(token, shift, prefer){
+    const punct = (token.match(/[.,;:!?]+$/) || [""])[0];
+    const core  = punct ? token.slice(0,-punct.length) : token;
+    const m = core.match(CHORD_TOKEN);
+    if(!m) return token;
+
+    const root=m[1], suffix=m[2]||"", bass=m[3]||"";
+    const newRoot = transposeNote(root, shift, prefer);
+    const newBass = bass ? transposeNote(bass, shift, prefer) : "";
+    const out = newBass ? `${newRoot}${suffix}/${newBass}` : `${newRoot}${suffix}`;
+    return out + punct;
+  }
+  function lineLooksLikeChords(line){
+    const parts = line.split(/(\s+|[|]+)/);
+    const tokens = parts.filter((_,i)=>i%2===0).map(x=>x.trim()).filter(Boolean);
+    if(tokens.length===0) return false;
+
+    let chordCount=0;
+    for(const t of tokens){
+      const sub = t.split("-").filter(Boolean);
+      let ok=0;
+      for(const s of sub) if(isChordToken(s)) ok++;
+      if(ok>0 && ok/sub.length>=0.6) chordCount++;
+    }
+    const ratio = chordCount / tokens.length;
+    return tokens.length>=1 && ratio>=0.6;
+  }
+  function transposeChordLine(line, shift, prefer){
+    return line.split(/(\s+|[|]+)/).map(part=>{
+      if(part.match(/^\s+$|^[|]+$/)) return part;
+      const raw = part;
+      const pieces = raw.split("-").map(p=>{
+        const t=p.trim();
+        if(isChordToken(t)) return transposeChordToken(t, shift, prefer);
+        return p;
+      });
+      return pieces.join("-");
+    }).join("");
+  }
+  function transposeAuto(text, fromKey, toKey, prefer){
+    const shift = semitoneDistance(fromKey, toKey);
+    if(!text) return "";
+    return text.split("\n").map(line=>{
+      if(lineLooksLikeChords(line)) return transposeChordLine(line, shift, prefer);
+      return line;
+    }).join("\n");
+  }
+
+  function updateTransposePreview(){
+    const from = keyEl.value || "C";
+    const isMinor = (modeEl.value === "minor");
+    fromKeyView.value = from + (isMinor ? "m" : "");
+    const to = toKeySel.value || "C";
+    const prefer = preferEl.value || "sharps";
+    transposedOut.value = transposeAuto(bodyEl.value || "", from, to, prefer);
+  }
+
+  bodyEl.addEventListener("input", updateTransposePreview);
+  keyEl.addEventListener("change", updateTransposePreview);
+  modeEl.addEventListener("change", updateTransposePreview);
+  preferEl.addEventListener("change", updateTransposePreview);
+  toKeySel.addEventListener("change", updateTransposePreview);
+
+  /* ================== Detector avanzado Mayor/Menor ================== */
+  function extractChordsFromText(text){
+    const chords = [];
+    const lines = (text||"").split("\n");
+    for(const line of lines){
+      if(!lineLooksLikeChords(line)) continue;
+      const parts = line.split(/(\s+|[|]+)/).filter(p=>p && !p.match(/^\s+$|^[|]+$/));
+      for(const part of parts){
+        const subs = part.split("-").map(x=>x.trim()).filter(Boolean);
+        for(const s of subs){
+          if(isChordToken(s)) chords.push(s);
+        }
+      }
+    }
+    return chords;
+  }
+  function chordRootPC(chord){
+    const m = chord.match(/^([A-G](?:#|b)?)/);
+    if(!m) return null;
+    const root = normalizeNote(m[1]);
+    const idx = NOTE_TO_INDEX.get(root);
+    return (idx===undefined) ? null : idx;
+  }
+  function chordQuality(chord){
+    const m = chord.match(/^([A-G](?:#|b)?)(.*)$/);
+    if(!m) return "unknown";
+    const rest = (m[2]||"");
+    if(rest.startsWith("m") && !rest.startsWith("maj")) return "minor";
+    return "major_or_other";
+  }
+  function expectedTriadsForKey(keyPC, mode){
+    const MAJ = [0,2,4,5,7,9,11];
+    const MIN = [0,2,3,5,7,8,10];
+    const scale = (mode==="major") ? MAJ : MIN;
+    return new Set(scale.map(s=> (keyPC+s)%12));
+  }
+  function scoreKeyCandidate(chords, keyPC, mode){
+    if(chords.length===0) return -999;
+    const counts = new Array(12).fill(0);
+    let minorCount=0, majorCount=0;
+
+    for(const c of chords){
+      const pc = chordRootPC(c);
+      if(pc===null) continue;
+      counts[pc]++;
+      const q = chordQuality(c);
+      if(q==="minor") minorCount++;
+      else if(q==="major_or_other") majorCount++;
+    }
+
+    const expected = expectedTriadsForKey(keyPC, mode);
+    let score = 0;
+
+    for(let pc=0; pc<12; pc++){
+      if(expected.has(pc)) score += counts[pc]*2;
+      else score -= counts[pc]*1.2;
+    }
+
+    score += counts[keyPC] * 4;
+    const V = (keyPC + 7) % 12;
+    score += counts[V] * 2.5;
+    if(mode==="minor") score += counts[V] * 2.5;
+
+    const totalQual = minorCount + majorCount;
+    if(totalQual>0){
+      const minorRatio = minorCount / totalQual;
+      if(mode==="minor") score += minorRatio * 6;
+      else score += (1-minorRatio) * 2;
+    }
+
+    return score;
+  }
+  function detectKeyAndMode(text, prefer){
+    const chords = extractChordsFromText(text);
+    if(chords.length === 0){
+      return { ok:false, reason:"No encontré acordes claros. Tip: poné acordes en líneas separadas." };
+    }
+
+    let best = { score:-Infinity, keyPC:0, mode:"major" };
+    for(let keyPC=0; keyPC<12; keyPC++){
+      const sMaj = scoreKeyCandidate(chords, keyPC, "major");
+      if(sMaj > best.score) best = { score:sMaj, keyPC, mode:"major" };
+
+      const sMin = scoreKeyCandidate(chords, keyPC, "minor");
+      if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
+    }
+
+    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
+    return { ok:true, key:palette[best.keyPC], mode:best.mode, chordsFound:chords.length };
+  }
+
+  /* ================== Funciones globales (onclick) ================== */
   window.showTab = function(name){
     document.getElementById("library").classList.add("hidden");
     document.getElementById("today").classList.add("hidden");
@@ -198,28 +438,22 @@
     bodyEl.value = "";
     keyEl.value = "C";
     modeEl.value = "major";
+    preferEl.value = "sharps";
+    toKeySel.value = "C";
+    updateTransposePreview();
   };
 
-  // Detecto “simple” por primer acorde encontrado (rápido).
-  // Si querés, lo vuelvo al detector avanzado que teníamos antes.
-  window.detectKey = function(){
-    const text = bodyEl.value || "";
-    const match = text.match(/\b([A-G](#|b)?m?)\b/g);
-    if(!match){ alert("No detecté acordes claros"); return; }
-    const first = match[0];
-    if(first.endsWith("m")){
-      modeEl.value = "minor";
-      keyEl.value = first.replace("m","");
-    }else{
-      modeEl.value = "major";
-      keyEl.value = first;
-    }
-    alert("Detectado: " + first);
+  window.detectKeyAdvanced = function(){
+    const res = detectKeyAndMode(bodyEl.value || "", preferEl.value || "sharps");
+    if(!res.ok){ alert(res.reason); return; }
+    keyEl.value = res.key;
+    modeEl.value = res.mode;
+    alert(`Detectado: ${res.key}${res.mode==="minor" ? "m" : ""} (acordes analizados: ${res.chordsFound})`);
+    updateTransposePreview();
   };
 
   window.saveSong = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-
     const title = (titleEl.value || "").trim();
     const body  = (bodyEl.value || "").trim();
     if(!title && !body){ alert("Poné título o contenido."); return; }
@@ -230,6 +464,7 @@
       title,
       key: keyEl.value,
       mode: modeEl.value,
+      prefer: preferEl.value,
       body,
       deleted: false
     }, { merge:true });
@@ -257,7 +492,9 @@
     titleEl.value = d.title || "";
     keyEl.value   = d.key || "C";
     modeEl.value  = d.mode || "major";
+    preferEl.value= d.prefer || "sharps";
     bodyEl.value  = d.body || "";
+    updateTransposePreview();
     window.showTab("library");
   };
 
@@ -272,9 +509,7 @@
     const snap = await getDoc(setRef);
     const items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
 
-    // evitar duplicados
     if(items.includes(id)){ alert("Ya está en el setlist."); return; }
-
     items.push(id);
     await setDoc(setRef,{ items },{ merge:true });
   };
@@ -300,36 +535,38 @@
 
       songsCache.set(docu.id, d);
 
-      // lista biblioteca
+      const tonal = (d.key||"") + (d.mode==="minor" ? "m" : "");
       const div=document.createElement("div");
       div.className="list-item";
-      const tonal = (d.key||"") + (d.mode==="minor" ? "m" : "");
       div.innerHTML = `
         <div>
           <div><b>${escapeHtml(d.title||"(Sin título)")}</b></div>
           <div style="font-size:12px;color:#666">Tono: ${escapeHtml(tonal)}</div>
         </div>
-        <button onclick="loadSong('${docu.id}')">Abrir</button>
+        <div class="mini">
+          <button onclick="loadSong('${docu.id}')">Abrir</button>
+        </div>
       `;
       songListEl.appendChild(div);
 
-      // picker setlist
       const opt=document.createElement("option");
       opt.value=docu.id;
       opt.textContent=d.title || "(Sin título)";
       songPickerEl.appendChild(opt);
     });
+
+    updateTransposePreview();
   }, (err)=>{
     console.error(err);
     netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
     netStatus.className = "status warn";
   });
 
-  onSnapshot(setRef, async (snap)=>{
+  onSnapshot(setRef, (snap)=>{
     setListEl.innerHTML = "";
     const items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
     if(items.length===0){
-      setListEl.innerHTML = `<div style="color:#666;font-size:12px">No hay canciones en el setlist.</div>`;
+      setListEl.innerHTML = `<div class="muted">No hay canciones en el setlist.</div>`;
       return;
     }
 
@@ -343,12 +580,11 @@
     }
   });
 
-  // intentar auto desbloqueo si había clave guardada
-  if(savedKey && savedKey.trim() === EDIT_KEY_MASTER){
-    setUnlocked(true);
-  } else {
-    setUnlocked(false);
-  }
+  // auto-desbloqueo si ya guardaste la clave correcta
+  if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
+  else setUnlocked(false);
+
+  updateTransposePreview();
 
   function escapeHtml(str){
     return (str||"").replace(/[&<>"']/g, s => ({
