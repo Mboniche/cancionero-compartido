@@ -104,8 +104,8 @@
 
 <div class="tabs no-print" style="margin-top:10px">
   <button onclick="showTab('library')">Biblioteca</button>
-  <button onclick="showTab('official')">Lista Oficial</button>
-  <button onclick="showTab('mylist')">Mi Lista</button>
+  <button onclick="showTab('official')">Lista de Alabanzas Oficial</button>
+  <button onclick="showTab('mylist')">Mi Lista de Alabanzas</button>
   <button onclick="showTab('members')">Integrantes</button>
   <button onclick="showTab('config')">Configuración</button>
 </div>
@@ -181,7 +181,7 @@
 <div id="official" class="card hidden">
   <div class="grid2 no-print">
     <div>
-      <h3 style="margin:0 0 10px">Lista Oficial (compartida)</h3>
+      <h3 style="margin:0 0 10px">Lista de Alabanzas Oficial (compartida)</h3>
 
       <div class="mini">
         <select id="songPickerOfficial" style="flex:1;min-width:240px"></select>
@@ -230,7 +230,8 @@
       </div>
 
       <div class="muted">
-        ✅ Aquí ahora también podés cambiar <b>Tocar en</b> por canción (igual que la lista oficial).
+        ✅ Aquí podés cambiar <b>Tocar en</b> por canción (igual que la lista oficial).
+        <br>✅ Para reordenar: <b>modo edición</b> → arrastrar con el icono ⠿.
         <br>Tu lista se guarda de forma <b>personal por dispositivo</b> (no afecta a los demás).
       </div>
 
@@ -261,8 +262,7 @@
 <div id="members" class="card hidden">
   <h3 style="margin:0 0 10px">Integrantes</h3>
   <div class="muted">
-    Esta sección la dejé como placeholder. Si ya tenés una lista de integrantes en Firestore,
-    decime la colección/documento y la conecto aquí.
+    Placeholder. Si ya tenés integrantes en Firestore, decime colección/documento y lo conecto.
   </div>
 </div>
 
@@ -811,7 +811,6 @@
   };
 
   window.printOfficial = function(){
-    // imprimir solo lo que corresponde
     window.print();
   };
 
@@ -858,7 +857,7 @@
     window.print();
   };
 
-  /* ================== Drag & Drop reorder (solo lista oficial) ================== */
+  /* ================== Drag & Drop reorder (OFICIAL) ================== */
   async function reorderOfficial(draggedId, targetId){
     if(!unlocked) return;
 
@@ -907,6 +906,58 @@
       const dragged = e.dataTransfer.getData("text/plain") || dragId;
       const target = row.dataset.id;
       await reorderOfficial(dragged, target);
+    });
+  }
+
+  /* ================== Drag & Drop reorder (MI LISTA) ✅ ================== */
+  async function reorderMy(draggedId, targetId){
+    if(!unlocked) return;
+
+    const from = mySet.findIndex(x=>x.id===draggedId);
+    const to   = mySet.findIndex(x=>x.id===targetId);
+    if(from<0 || to<0 || from===to) return;
+
+    const arr = mySet.slice();
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    mySet = arr;
+
+    await saveMy();
+    renderMySet();
+  }
+
+  function attachDragHandlersMy(row){
+    if(!unlocked) return;
+
+    row.addEventListener("dragstart", (e)=>{
+      dragId = row.dataset.id;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragId);
+    });
+
+    row.addEventListener("dragend", ()=>{
+      dragId = null;
+      row.classList.remove("dragging");
+      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
+    });
+
+    row.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      row.classList.add("drop-target");
+      e.dataTransfer.dropEffect = "move";
+    });
+
+    row.addEventListener("dragleave", ()=>{
+      row.classList.remove("drop-target");
+    });
+
+    row.addEventListener("drop", async (e)=>{
+      e.preventDefault();
+      row.classList.remove("drop-target");
+      const dragged = e.dataTransfer.getData("text/plain") || dragId;
+      const target = row.dataset.id;
+      await reorderMy(dragged, target);
     });
   }
 
@@ -999,7 +1050,7 @@
     });
   }
 
-  /* ================== Render Mi Lista (CON CAMBIO DE TONO ✅) ================== */
+  /* ================== Render Mi Lista (CAMBIO DE TONO + ORDEN ✅) ================== */
   function renderMySet(){
     myOrderEl.innerHTML = "";
     mySongsEl.innerHTML = "";
@@ -1012,13 +1063,11 @@
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
       const originalKey = s.key || "C";
-
-      // ✅ aquí está el punto clave: si no hay toKey, usar original
-      const toKeyRaw = entry.toKey || originalKey;
+      const toKeyRaw = entry.toKey || originalKey; // default: original
+      const prefer = s.prefer || "sharps";
 
       const originalKeyLabel = originalKey + (isMin ? "m" : "");
       const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
-      const prefer = s.prefer || "sharps";
 
       const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
@@ -1027,12 +1076,18 @@
       row.className = "list-item";
       row.dataset.id = entry.id;
 
+      // ✅ draggable solo en modo edición
+      row.draggable = !!unlocked;
+
       row.innerHTML = `
-        <div>
-          <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
-          <div class="muted">
-            Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
-            Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="drag-handle" title="${unlocked ? "Arrastrar para ordenar" : "Activa modo edición para arrastrar"}">⠿</span>
+          <div>
+            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
+            <div class="muted">
+              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+            </div>
           </div>
         </div>
         <div class="mini">
@@ -1043,7 +1098,9 @@
       `;
       myOrderEl.appendChild(row);
 
-      // ✅ Selector de tono en "Mi Lista"
+      // ✅ activar drag handlers (Mi Lista)
+      attachDragHandlersMy(row);
+
       const sel = row.querySelector("select");
       buildToKeySelect(sel, originalKey);
       sel.value = toKeyRaw;
@@ -1093,7 +1150,6 @@
 
     songsCache.clear();
     songListEl.innerHTML = "";
-
     songPickerOfficialEl.innerHTML = "";
     songPickerMyEl.innerHTML = "";
 
