@@ -615,7 +615,6 @@ Puente suave"></textarea>
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
 
-    // bloquear / desbloquear inputs oficiales e integrantes
     const dis = !v;
     [
       officialServiceNameEl, officialServiceDateEl,
@@ -625,7 +624,6 @@ Puente suave"></textarea>
     ].forEach(el => el.disabled = dis);
     btnSaveOfficialMeta.disabled = dis;
 
-    // integrantes
     [memNameEl, memTypeEl, memLeadEl, memChoirEl, memAlsoSingsEl, memLead2El, memChoir2El, memExtraInstEl]
       .forEach(el => el.disabled = dis);
     document.querySelectorAll(".memInst").forEach(el => el.disabled = dis);
@@ -924,7 +922,6 @@ Puente suave"></textarea>
       const sMin = scoreKeyCandidate(chords, keyPC, "minor");
       if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
     }
-    // anti relativo menor
     if(best.mode==="minor"){
       const relMaj = (best.keyPC + 3) % 12;
       const relMajScore = scoreKeyCandidate(chords, relMaj, "major");
@@ -1128,9 +1125,8 @@ Puente suave"></textarea>
   favOnlyEl.addEventListener("change", renderLibraryList);
 
   /* ================== Pickers ================== */
-  let allSongOptions = []; // [{id,title}]
+  let allSongOptions = [];
   function fillPickers(){
-    // build song list once
     allSongOptions = [];
     for(const [id,d] of songsCache.entries()){
       if(d.deleted) continue;
@@ -1143,7 +1139,6 @@ Puente suave"></textarea>
       return a.title.localeCompare(b.title,"es");
     });
 
-    // MY picker (no filter)
     songPickerMyEl.innerHTML = "";
     for(const o of allSongOptions){
       const opt=document.createElement("option");
@@ -1151,7 +1146,6 @@ Puente suave"></textarea>
       songPickerMyEl.appendChild(opt);
     }
 
-    // Official picker filtered by search
     filterOfficialPicker();
   }
 
@@ -1202,18 +1196,15 @@ Puente suave"></textarea>
         : [],
       comments: (m.comments||"")
     };
-    // regla: voz principal no en coro
     if(base.leadId){
       base.choirIds = base.choirIds.filter(id=>id!==base.leadId);
     }
-    // regla: músico no en 2 instrumentos (limpia duplicados)
     const seen = new Set();
     for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
       const v = base.instruments[k];
       if(v && seen.has(v)) base.instruments[k] = "";
       if(v) seen.add(v);
     }
-    // extras: no duplicar músico ya usado en fijos/extras
     for(const ex of base.extraInstruments){
       if(!ex.memberId) continue;
       if(seen.has(ex.memberId)){ ex.memberId = ""; }
@@ -1235,18 +1226,15 @@ Puente suave"></textarea>
   window.saveOfficialMeta = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
 
-    // leer campos
     officialMeta.serviceName = (officialServiceNameEl.value||"").trim();
     officialMeta.serviceDate = (officialServiceDateEl.value||"").trim();
     officialMeta.comments    = (officialCommentsEl.value||"").trim();
 
-    // lead + choir ya vienen de UI state (checkboxes / select)
-    // instruments already in officialMeta from change handlers
     officialMeta = normalizeOfficialMeta(officialMeta);
 
     await setDoc(officialRef, { meta: officialMeta }, { merge:true });
     alert("✅ Datos guardados");
-    renderOfficial(); // re-aplica reglas (lead no coro, etc.)
+    renderOfficial();
   };
 
   window.addToOfficial = async function(){
@@ -1326,7 +1314,7 @@ Puente suave"></textarea>
     });
   }
 
-  /* ====== OFICIAL: Integrantes (selectors con filtros + reglas) ====== */
+  /* ====== OFICIAL: Integrantes ====== */
 
   function memberDisplayName(m){
     return (m?.name || "(Sin nombre)");
@@ -1352,8 +1340,6 @@ Puente suave"></textarea>
   }
 
   function getUsedMusicians(exceptSlot){
-    // músicos usados en instrumentos (para evitar que aparezca en 2 slots)
-    // exceptSlot: {type:"fixed", name:"Guitarra"} OR {type:"extra", idx:0}
     const used = new Set();
 
     const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
@@ -1393,7 +1379,6 @@ Puente suave"></textarea>
       officialLeadSelectEl.appendChild(opt);
     }
 
-    // set current
     officialLeadSelectEl.value = officialMeta.leadId || "";
   }
 
@@ -1402,7 +1387,6 @@ Puente suave"></textarea>
 
     const leadId = officialMeta.leadId || "";
     if(leadId){
-      // regla: lead no en coro
       officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==leadId);
     }
 
@@ -1440,7 +1424,6 @@ Puente suave"></textarea>
         const set = new Set(officialMeta.choirIds || []);
         if(cb.checked) set.add(id); else set.delete(id);
 
-        // regla: no incluir voz principal
         if(officialMeta.leadId) set.delete(officialMeta.leadId);
 
         officialMeta.choirIds = [...set];
@@ -1460,10 +1443,7 @@ Puente suave"></textarea>
     const list = [];
     for(const [id,m] of membersCache.entries()){
       if(!memberPlaysInstrument(m, instrumentName)) continue;
-
-      // si ya está usado en otro instrumento, no mostrar (a menos que sea el actual)
       if(used.has(id) && id !== selectedId) continue;
-
       list.push({id, name: memberDisplayName(m)});
     }
     list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
@@ -1479,28 +1459,24 @@ Puente suave"></textarea>
   }
 
   function rebuildFixedInstrumentSelects(){
-    // Guitarra
     buildInstrumentSelect(
       instGuitarraEl,
       "Guitarra",
       officialMeta?.instruments?.Guitarra || "",
       {type:"fixed", name:"Guitarra"}
     );
-    // Bajo
     buildInstrumentSelect(
       instBajoEl,
       "Bajo",
       officialMeta?.instruments?.Bajo || "",
       {type:"fixed", name:"Bajo"}
     );
-    // Teclas
     buildInstrumentSelect(
       instTeclasEl,
       "Teclas",
       officialMeta?.instruments?.Teclas || "",
       {type:"fixed", name:"Teclas"}
     );
-    // Batería
     buildInstrumentSelect(
       instBateriaEl,
       "Batería",
@@ -1546,7 +1522,6 @@ Puente suave"></textarea>
       const sel = row.querySelector("select");
       sel.disabled = !unlocked;
 
-      // opciones: músicos que tengan este instrumento extra marcado en su perfil
       sel.innerHTML = "";
       const opt0 = document.createElement("option");
       opt0.value = "";
@@ -1572,7 +1547,6 @@ Puente suave"></textarea>
       sel.addEventListener("change", ()=>{
         if(!Array.isArray(officialMeta.extraInstruments)) officialMeta.extraInstruments = [];
         officialMeta.extraInstruments[idx].memberId = sel.value || "";
-        // refrescar para aplicar regla músico no 2 instrumentos
         rebuildFixedInstrumentSelects();
         renderExtraInstruments();
       });
@@ -1599,14 +1573,13 @@ Puente suave"></textarea>
 
   officialLeadSelectEl.addEventListener("change", ()=>{
     officialMeta.leadId = officialLeadSelectEl.value || "";
-    // regla: lead no en coro
     if(officialMeta.leadId){
       officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==officialMeta.leadId);
     }
     rebuildChoirMulti();
   });
 
-  /* ======= render OFICIAL (lista + pantalla + impresión) ======= */
+  /* ======= render OFICIAL ======= */
   function renderOfficial(){
     officialOrderEl.innerHTML = "";
     officialSongsEl.innerHTML = "";
@@ -1615,16 +1588,13 @@ Puente suave"></textarea>
     const visible = officialList.filter(x=>getSong(x.id));
     officialEmptyEl.style.display = (visible.length===0) ? "block" : "none";
 
-    // inputs base
     syncOfficialInputsFromMeta();
 
-    // rebuild selectors (members)
     rebuildLeadSelect();
     rebuildChoirMulti();
     rebuildFixedInstrumentSelects();
     renderExtraInstruments();
 
-    // ---- PRINT HEADER (incluye info equipo arriba) ----
     const leadName = officialMeta.leadId ? memberDisplayName(getMember(officialMeta.leadId)) : "";
     const choirNames = (officialMeta.choirIds||[])
       .map(id=>memberDisplayName(getMember(id)))
@@ -1644,6 +1614,11 @@ Puente suave"></textarea>
         instLines.push(`${ex.name}: ${memberDisplayName(getMember(ex.memberId))}`);
       }
     }
+
+    const officialSongTitles = visible.map((entry, idx) => {
+      const s = getSong(entry.id);
+      return `${idx + 1}. ${s?.title || "(Sin título)"}`;
+    }).join("\n");
 
     const header = document.createElement("div");
     header.className = "print-block";
@@ -1666,11 +1641,13 @@ Puente suave"></textarea>
           <div style="margin-top:6px"><b>Comentarios:</b> (Sin comentarios)</div>
         `}
       </div>
+
+      <div style="margin-top:12px"><b>Orden de canciones:</b></div>
+      <pre class="lyrics" style="border:1px solid #000;border-radius:0;margin-top:6px">${escapeHtml(officialSongTitles || "(Sin canciones)")}</pre>
       <hr />
     `;
     officialPrintBlocks.appendChild(header);
 
-    // ---- pantalla + print de canciones ----
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
@@ -1684,7 +1661,6 @@ Puente suave"></textarea>
       const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
 
-      // Order row (pantalla)
       const row = document.createElement("div");
       row.className = "list-item";
       row.dataset.id = entry.id;
@@ -1715,7 +1691,6 @@ Puente suave"></textarea>
       sel.value = toKeyRaw;
       sel.addEventListener("change", ()=> window.officialSetToKey(entry.id, sel.value));
 
-      // Vista pantalla (ACORDES + CANCIÓN)
       const box = document.createElement("div");
       box.className = "songbox";
       box.innerHTML = `
@@ -1733,7 +1708,6 @@ Puente suave"></textarea>
       `;
       officialSongsEl.appendChild(box);
 
-      // Bloque impresión canción
       const block = document.createElement("div");
       block.className = "print-block";
       block.innerHTML = `
@@ -1754,7 +1728,7 @@ Puente suave"></textarea>
     });
   }
 
-  /* ================== MI LISTA (personal) ================== */
+  /* ================== MI LISTA ================== */
   function loadMy(){
     try{
       const raw = localStorage.getItem(LS_MY_LIST);
@@ -1922,12 +1896,21 @@ Puente suave"></textarea>
     setImportBannerVisible(showImported);
 
     const meta = getMyMeta();
+
+    const mySongTitles = visible.map((entry, idx) => {
+      const s = getSong(entry.id);
+      return `${idx + 1}. ${s?.title || "(Sin título)"}`;
+    }).join("\n");
+
     const headerHtml = `
       <div class="print-block">
         <div class="print-title">Mi Lista de Alabanzas</div>
         <div class="print-meta">
           ${escapeHtml(meta.serviceName || "")}${meta.serviceDate ? " • Fecha: "+escapeHtml(fmtDateISO(meta.serviceDate)) : ""}
         </div>
+
+        <div style="margin-top:12px"><b>Orden de canciones:</b></div>
+        <pre class="lyrics" style="border:1px solid #000;border-radius:0;margin-top:6px">${escapeHtml(mySongTitles || "(Sin canciones)")}</pre>
         <hr />
       </div>
     `;
@@ -2013,7 +1996,7 @@ Puente suave"></textarea>
     });
   }
 
-  /* ================== Compartir Mi Lista (link) ================== */
+  /* ================== Compartir Mi Lista ================== */
   function base64UrlEncode(str){
     const b64 = btoa(unescape(encodeURIComponent(str)));
     return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
@@ -2087,7 +2070,7 @@ Puente suave"></textarea>
   window.printOfficial = function(){ setPrintTarget("official"); window.print(); };
   window.printMy = function(){ setPrintTarget("my"); window.print(); };
 
-  /* ================== INTEGRANTES (Firestore) ================== */
+  /* ================== INTEGRANTES ================== */
   const membersCol = collection(db,"members");
 
   function setMemberFormMode(type){
@@ -2175,7 +2158,6 @@ Puente suave"></textarea>
       document.querySelectorAll(".memInst").forEach(cb=>{
         if(cb.checked) inst.push(cb.value);
       });
-      // extras
       for(const x of memberExtraInstruments){
         if(x && !inst.includes(x)) inst.push(x);
       }
@@ -2201,10 +2183,8 @@ Puente suave"></textarea>
     if(!editingMemberId){ alert("No hay integrante cargado."); return; }
     if(!confirm("¿Eliminar este integrante?")) return;
 
-    // borrar doc (simple)
     await deleteDoc(doc(db,"members",editingMemberId));
 
-    // limpiar meta oficial si usaba a esa persona
     const id = editingMemberId;
     if(officialMeta.leadId===id) officialMeta.leadId="";
     officialMeta.choirIds = (officialMeta.choirIds||[]).filter(x=>x!==id);
@@ -2215,7 +2195,6 @@ Puente suave"></textarea>
     if(Array.isArray(officialMeta.extraInstruments)){
       officialMeta.extraInstruments.forEach(ex=>{ if(ex.memberId===id) ex.memberId=""; });
     }
-    // guardar meta para que todos queden limpios (solo si unlocked)
     await setDoc(officialRef, { meta: officialMeta }, { merge:true });
 
     window.clearMemberForm();
@@ -2247,7 +2226,6 @@ Puente suave"></textarea>
         cb.checked = insts.includes(cb.value);
       });
 
-      // extras: todo lo que no es base
       const base = new Set(["Guitarra","Bajo","Teclas","Batería"]);
       memberExtraInstruments = insts.filter(x=>!base.has(x));
       renderMemberExtraInstList();
@@ -2257,8 +2235,6 @@ Puente suave"></textarea>
   };
 
   function renderMembers(){
-    // toggle fields enabled based on unlocked already in setUnlocked
-
     const q = normalizeTitle(memSearchEl.value||"");
     const arr = [];
     for(const [id,m] of membersCache.entries()){
@@ -2303,7 +2279,6 @@ Puente suave"></textarea>
       membersListEl.innerHTML = `<div class="muted">No hay integrantes.</div>`;
     }
 
-    // quick view
     const lead = [];
     const choir = [];
     const inst = {Guitarra:[], Bajo:[], Teclas:[], "Batería":[]};
@@ -2360,10 +2335,7 @@ Puente suave"></textarea>
     officialList = normalizeItems(data.items);
     officialMeta = normalizeOfficialMeta(data.meta);
 
-    // set input values (name/date/comments)
     syncOfficialInputsFromMeta();
-
-    // refresh UI
     renderOfficial();
   });
 
@@ -2374,7 +2346,6 @@ Puente suave"></textarea>
       membersCache.set(docu.id, d);
     });
 
-    // refresh official selectors and members list
     renderMembers();
     renderOfficial();
   });
@@ -2386,14 +2357,11 @@ Puente suave"></textarea>
   tryLoadImportedFromUrl();
   setPrintTarget("official");
 
-  // integrantes init
   window.clearMemberForm();
   renderMemberExtraInstList();
 
-  // first render placeholder
   renderLibraryList();
 </script>
 
 </body>
 </html>
-
