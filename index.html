@@ -61,7 +61,6 @@
   .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
   .banner{border:1px solid #d7e6ff;background:#f3f8ff;padding:12px;border-radius:14px;margin:10px 0}
 
-  /* Drag & drop */
   .drag-handle{
     font-size:18px;padding:4px 8px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:grab;
     user-select:none;line-height:1;
@@ -69,7 +68,6 @@
   .dragging{opacity:.55}
   .drop-target{outline:2px dashed #9aa3b2; outline-offset:4px}
 
-  /* Favorites */
   .star{
     font-size:18px;border:1px solid var(--border);border-radius:12px;padding:4px 10px;background:#fff;cursor:pointer;
   }
@@ -77,33 +75,97 @@
   .searchbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .searchbar input{flex:1;min-width:220px}
 
-  /* Print targeting */
   .print-area{display:none}
 
-  /* ===== PRINT (B/N) ===== */
   @media print{
     .tabs,.no-print{display:none !important}
     body{max-width:none;margin:0;background:#fff;color:#000}
     .card{border:none;padding:0;box-shadow:none;background:#fff}
 
-    /* ocultar vista pantalla para evitar duplicados */
     #officialOrder, #officialSongs, #myOrder, #mySongs{display:none !important;}
 
     .print-area{display:none !important;}
     .print-area.print-target{display:block !important;}
 
-    .print-block{page-break-inside:avoid;margin:0 0 18px}
-    .print-title{font-size:18px;font-weight:800;margin:0 0 6px}
-    .print-meta{font-size:12px;color:#000;margin:0 0 8px}
-
-    .print-chords-title{font-size:12px;font-weight:800;margin:0 0 6px}
-    .print-chords{
-      white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;margin:0 0 10px;
-      padding:10px;border:1px solid #000;border-radius:0;
+    .print-block{
+      page-break-inside:avoid;
+      margin:0 0 18px;
     }
-    pre.lyrics{border:1px solid #000;border-radius:0}
-    hr{border:none;border-top:1px solid #000;margin:14px 0}
-    .print-box{border:1px solid #000;padding:10px;margin:12px 0}
+
+    .print-block.song-print-block{
+      page-break-before:always;
+    }
+
+    .print-block.song-print-block.first-song{
+      page-break-before:auto;
+    }
+
+    .print-title{
+      font-size:20px;
+      font-weight:800;
+      margin:0 0 8px;
+    }
+
+    .print-meta{
+      font-size:13px;
+      color:#000;
+      margin:0 0 10px;
+    }
+
+    .print-section-title{
+      font-size:15px;
+      font-weight:800;
+      margin:12px 0 6px;
+    }
+
+    .print-chords-title{
+      font-size:13px;
+      font-weight:800;
+      margin:0 0 6px;
+    }
+
+    .print-chords{
+      white-space:pre-wrap;
+      font-family:ui-monospace,Menlo,monospace;
+      font-size:13px;
+      line-height:1.5;
+      margin:0 0 12px;
+      padding:12px;
+      border:1px solid #000;
+      border-radius:0;
+    }
+
+    pre.lyrics{
+      border:1px solid #000;
+      border-radius:0;
+      font-size:13px;
+      line-height:1.5;
+      padding:12px;
+    }
+
+    hr{
+      border:none;
+      border-top:1px solid #000;
+      margin:14px 0;
+    }
+
+    .print-box{
+      border:1px solid #000;
+      padding:12px;
+      margin:12px 0;
+    }
+
+    .print-song-index{
+      white-space:pre-wrap;
+      font-family:ui-monospace,Menlo,monospace;
+      font-size:13px;
+      line-height:1.55;
+      margin:0;
+      padding:12px;
+      border:1px solid #000;
+      border-radius:0;
+      background:#fff;
+    }
   }
 </style>
 </head>
@@ -166,7 +228,6 @@
     <button onclick="clearForm()">Nueva</button>
   </div>
 
-  <!-- TRANSPOSE (preview) -->
   <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:12px">
     <h3 style="margin:0 0 8px">Transposición (vista previa)</h3>
 
@@ -305,8 +366,6 @@ Puente suave"></textarea>
   <div id="officialEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en la lista oficial.</div>
 
   <div class="divider"></div>
-
-  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
   <div id="officialSongs"></div>
 
   <div id="officialPrintArea" class="print-area">
@@ -314,7 +373,7 @@ Puente suave"></textarea>
   </div>
 </div>
 
-<!-- MI LISTA (PERSONAL) -->
+<!-- MI LISTA -->
 <div id="my" class="card hidden">
   <div id="importBanner" class="banner hidden no-print">
     <div><b>📥 Lista recibida por link</b></div>
@@ -349,7 +408,6 @@ Puente suave"></textarea>
 
       <div class="mini" style="margin-top:10px">
         <button class="soft" onclick="printMy()">🖨️ Imprimir mi lista</button>
-       <!-- <button class="primary" onclick="shareMy()">🔗 Compartir mi lista</button> -->
       </div>
 
       <div id="shareOut" class="muted" style="margin-top:8px"></div>
@@ -363,8 +421,6 @@ Puente suave"></textarea>
   </div>
 
   <div class="divider no-print"></div>
-
-  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
   <div id="mySongs"></div>
 
   <div id="myPrintArea" class="print-area">
@@ -480,7 +536,6 @@ Puente suave"></textarea>
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  /* ================== FIREBASE ================== */
   const firebaseConfig = {
     apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
     authDomain: "cancionero-compartido.firebaseapp.com",
@@ -492,10 +547,8 @@ Puente suave"></textarea>
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  /* ================== CLAVE ================== */
   const EDIT_KEY_MASTER = "CFVN2026";
 
-  /* ================== UI refs ================== */
   const netStatus = document.getElementById("netStatus");
   const editStatus = document.getElementById("editStatus");
 
@@ -552,7 +605,6 @@ Puente suave"></textarea>
   const toKeySel = document.getElementById("toKey");
   const transposedOut = document.getElementById("transposedOut");
 
-  /* Integrantes UI */
   const memNameEl = document.getElementById("memName");
   const memTypeEl = document.getElementById("memType");
   const cantanteBoxEl = document.getElementById("cantanteBox");
@@ -571,42 +623,38 @@ Puente suave"></textarea>
   const btnMemSave = document.getElementById("btnMemSave");
   const btnMemDelete = document.getElementById("btnMemDelete");
 
-  /* ================== Estado ================== */
   let unlocked = false;
   let currentId = null;
 
-  let songsCache = new Map();       // id -> song data
-  let membersCache = new Map();     // id -> member data
+  let songsCache = new Map();
+  let membersCache = new Map();
 
-  let officialList = [];            // firestore items [{id,toKey}]
+  let officialList = [];
   let officialMeta = {
     serviceName:"",
     serviceDate:"",
     leadId:"",
     choirIds:[],
     instruments:{ Guitarra:"", Bajo:"", Teclas:"", "Batería":"" },
-    extraInstruments:[],            // [{name, memberId}]
+    extraInstruments:[],
     comments:""
   };
 
-  let myList = [];                  // local items [{id,toKey}]
+  let myList = [];
   let importedList = null;
   let showImported = false;
 
   let dragOfficialId = null;
   let dragMyId = null;
 
-  /* Integrantes form state */
   let editingMemberId = null;
-  let memberExtraInstruments = []; // extra instruments list in member form
+  let memberExtraInstruments = [];
 
-  /* ================== Local Storage Keys ================== */
   const LS_EDIT = "cancionero_editkey";
   const LS_MY_LIST = "cfvn_my_list_v2";
   const LS_MY_META = "cfvn_my_meta_v1";
   const LS_FAVS = "cfvn_favs_v1";
 
-  /* ================== Saved edit key ================== */
   const savedKey = localStorage.getItem(LS_EDIT);
   if(savedKey) editKeyInputEl.value = savedKey;
 
@@ -634,7 +682,6 @@ Puente suave"></textarea>
     renderMembers();
   }
 
-  /* ================== Helpers ================== */
   function escapeHtml(str){
     return (str||"").replace(/[&<>"']/g, s => ({
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -651,7 +698,6 @@ Puente suave"></textarea>
   function getSong(id){ return songsCache.get(id) || null; }
   function getMember(id){ return membersCache.get(id) || null; }
 
-  /* ================== Tabs ================== */
   window.showTab = function(name){
     ["library","official","my","members","config"].forEach(id=>document.getElementById(id).classList.add("hidden"));
     document.getElementById(name).classList.remove("hidden");
@@ -660,7 +706,6 @@ Puente suave"></textarea>
     if(name==="members") renderMembers();
   };
 
-  /* ================== Config ================== */
   window.unlock = function(){
     const k = (editKeyInputEl.value || "").trim();
     if(k === EDIT_KEY_MASTER){
@@ -679,7 +724,6 @@ Puente suave"></textarea>
     setUnlocked(false);
   };
 
-  /* ================== Tonos ================== */
   const NOTES_SHARPS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
   const NOTES_FLATS  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
   const KEY_OPTIONS  = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
@@ -720,7 +764,6 @@ Puente suave"></textarea>
   function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
   function modeLabel(mode){ return mode==="minor" ? "Menor" : "Mayor"; }
 
-  /* ================== Transposición ================== */
   const CHORD_TOKEN = /^([A-G](?:#|b)?)([^A-G\/\s]*)(?:\/([A-G](?:#|b)?))?$/;
 
   function normalizeNote(note){
@@ -832,7 +875,6 @@ Puente suave"></textarea>
   preferEl.addEventListener("change", updateTransposePreview);
   toKeySel.addEventListener("change", updateTransposePreview);
 
-  /* ================== Detector tono (mejorado) ================== */
   function extractChordsFromText(text){
     const chords = [];
     const lines = (text||"").split("\n");
@@ -942,7 +984,6 @@ Puente suave"></textarea>
     updateTransposePreview();
   };
 
-  /* ================== Favoritos (personales) ================== */
   function loadFavs(){
     try{
       const raw = localStorage.getItem(LS_FAVS);
@@ -962,7 +1003,6 @@ Puente suave"></textarea>
     filterOfficialPicker();
   };
 
-  /* ================== Biblioteca (Guardar/Eliminar/Cargar) ================== */
   window.clearForm = function(){
     currentId = null;
     titleEl.value = "";
@@ -1124,7 +1164,6 @@ Puente suave"></textarea>
   searchLibEl.addEventListener("input", renderLibraryList);
   favOnlyEl.addEventListener("change", renderLibraryList);
 
-  /* ================== Pickers ================== */
   let allSongOptions = [];
   function fillPickers(){
     allSongOptions = [];
@@ -1162,7 +1201,6 @@ Puente suave"></textarea>
 
   officialSongSearchEl.addEventListener("input", filterOfficialPicker);
 
-  /* ================== OFICIAL (Firestore) ================== */
   const officialRef = doc(db,"shared","official");
 
   function normalizeItems(items){
@@ -1314,8 +1352,6 @@ Puente suave"></textarea>
     });
   }
 
-  /* ====== OFICIAL: Integrantes ====== */
-
   function memberDisplayName(m){
     return (m?.name || "(Sin nombre)");
   }
@@ -1341,7 +1377,6 @@ Puente suave"></textarea>
 
   function getUsedMusicians(exceptSlot){
     const used = new Set();
-
     const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
     for(const nm of fixedNames){
       const id = officialMeta?.instruments?.[nm] || "";
@@ -1384,7 +1419,6 @@ Puente suave"></textarea>
 
   function rebuildChoirMulti(){
     officialChoirMultiEl.innerHTML = "";
-
     const leadId = officialMeta.leadId || "";
     if(leadId){
       officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==leadId);
@@ -1423,9 +1457,7 @@ Puente suave"></textarea>
         const id = cb.getAttribute("data-id");
         const set = new Set(officialMeta.choirIds || []);
         if(cb.checked) set.add(id); else set.delete(id);
-
         if(officialMeta.leadId) set.delete(officialMeta.leadId);
-
         officialMeta.choirIds = [...set];
       });
     });
@@ -1439,7 +1471,6 @@ Puente suave"></textarea>
     selectEl.appendChild(opt0);
 
     const used = getUsedMusicians(exceptSlot);
-
     const list = [];
     for(const [id,m] of membersCache.entries()){
       if(!memberPlaysInstrument(m, instrumentName)) continue;
@@ -1459,30 +1490,10 @@ Puente suave"></textarea>
   }
 
   function rebuildFixedInstrumentSelects(){
-    buildInstrumentSelect(
-      instGuitarraEl,
-      "Guitarra",
-      officialMeta?.instruments?.Guitarra || "",
-      {type:"fixed", name:"Guitarra"}
-    );
-    buildInstrumentSelect(
-      instBajoEl,
-      "Bajo",
-      officialMeta?.instruments?.Bajo || "",
-      {type:"fixed", name:"Bajo"}
-    );
-    buildInstrumentSelect(
-      instTeclasEl,
-      "Teclas",
-      officialMeta?.instruments?.Teclas || "",
-      {type:"fixed", name:"Teclas"}
-    );
-    buildInstrumentSelect(
-      instBateriaEl,
-      "Batería",
-      officialMeta?.instruments?.["Batería"] || "",
-      {type:"fixed", name:"Batería"}
-    );
+    buildInstrumentSelect(instGuitarraEl, "Guitarra", officialMeta?.instruments?.Guitarra || "", {type:"fixed", name:"Guitarra"});
+    buildInstrumentSelect(instBajoEl, "Bajo", officialMeta?.instruments?.Bajo || "", {type:"fixed", name:"Bajo"});
+    buildInstrumentSelect(instTeclasEl, "Teclas", officialMeta?.instruments?.Teclas || "", {type:"fixed", name:"Teclas"});
+    buildInstrumentSelect(instBateriaEl, "Batería", officialMeta?.instruments?.["Batería"] || "", {type:"fixed", name:"Batería"});
 
     instGuitarraEl.onchange = () => { officialMeta.instruments.Guitarra = instGuitarraEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
     instBajoEl.onchange     = () => { officialMeta.instruments.Bajo     = instBajoEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
@@ -1521,7 +1532,6 @@ Puente suave"></textarea>
 
       const sel = row.querySelector("select");
       sel.disabled = !unlocked;
-
       sel.innerHTML = "";
       const opt0 = document.createElement("option");
       opt0.value = "";
@@ -1579,7 +1589,6 @@ Puente suave"></textarea>
     rebuildChoirMulti();
   });
 
-  /* ======= render OFICIAL ======= */
   function renderOfficial(){
     officialOrderEl.innerHTML = "";
     officialSongsEl.innerHTML = "";
@@ -1589,16 +1598,13 @@ Puente suave"></textarea>
     officialEmptyEl.style.display = (visible.length===0) ? "block" : "none";
 
     syncOfficialInputsFromMeta();
-
     rebuildLeadSelect();
     rebuildChoirMulti();
     rebuildFixedInstrumentSelects();
     renderExtraInstruments();
 
     const leadName = officialMeta.leadId ? memberDisplayName(getMember(officialMeta.leadId)) : "";
-    const choirNames = (officialMeta.choirIds||[])
-      .map(id=>memberDisplayName(getMember(id)))
-      .filter(Boolean);
+    const choirNames = (officialMeta.choirIds||[]).map(id=>memberDisplayName(getMember(id))).filter(Boolean);
 
     const instLines = [];
     const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
@@ -1642,8 +1648,8 @@ Puente suave"></textarea>
         `}
       </div>
 
-      <div style="margin-top:12px"><b>Orden de canciones:</b></div>
-      <pre class="lyrics" style="border:1px solid #000;border-radius:0;margin-top:6px">${escapeHtml(officialSongTitles || "(Sin canciones)")}</pre>
+      <div class="print-section-title">Orden de canciones:</div>
+      <pre class="print-song-index">${escapeHtml(officialSongTitles || "(Sin canciones)")}</pre>
       <hr />
     `;
     officialPrintBlocks.appendChild(header);
@@ -1709,7 +1715,7 @@ Puente suave"></textarea>
       officialSongsEl.appendChild(box);
 
       const block = document.createElement("div");
-      block.className = "print-block";
+      block.className = `print-block song-print-block ${idx===0 ? "first-song" : ""}`;
       block.innerHTML = `
         <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
         <div class="print-meta">
@@ -1722,13 +1728,11 @@ Puente suave"></textarea>
 
         <div class="print-chords-title">CANCIÓN</div>
         <pre class="lyrics">${escapeHtml(transposed)}</pre>
-        <hr />
       `;
       officialPrintBlocks.appendChild(block);
     });
   }
 
-  /* ================== MI LISTA ================== */
   function loadMy(){
     try{
       const raw = localStorage.getItem(LS_MY_LIST);
@@ -1909,8 +1913,8 @@ Puente suave"></textarea>
           ${escapeHtml(meta.serviceName || "")}${meta.serviceDate ? " • Fecha: "+escapeHtml(fmtDateISO(meta.serviceDate)) : ""}
         </div>
 
-        <div style="margin-top:12px"><b>Orden de canciones:</b></div>
-        <pre class="lyrics" style="border:1px solid #000;border-radius:0;margin-top:6px">${escapeHtml(mySongTitles || "(Sin canciones)")}</pre>
+        <div class="print-section-title">Orden de canciones:</div>
+        <pre class="print-song-index">${escapeHtml(mySongTitles || "(Sin canciones)")}</pre>
         <hr />
       </div>
     `;
@@ -1977,7 +1981,7 @@ Puente suave"></textarea>
       mySongsEl.appendChild(box);
 
       const block = document.createElement("div");
-      block.className = "print-block";
+      block.className = `print-block song-print-block ${idx===0 ? "first-song" : ""}`;
       block.innerHTML = `
         <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
         <div class="print-meta">
@@ -1990,13 +1994,11 @@ Puente suave"></textarea>
 
         <div class="print-chords-title">CANCIÓN</div>
         <pre class="lyrics">${escapeHtml(transposed)}</pre>
-        <hr />
       `;
       myPrintBlocks.appendChild(block);
     });
   }
 
-  /* ================== Compartir Mi Lista ================== */
   function base64UrlEncode(str){
     const b64 = btoa(unescape(encodeURIComponent(str)));
     return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
@@ -2060,7 +2062,6 @@ Puente suave"></textarea>
     }
   }
 
-  /* ================== Impresión ================== */
   function setPrintTarget(target){
     officialPrintArea.classList.remove("print-target");
     myPrintArea.classList.remove("print-target");
@@ -2070,7 +2071,6 @@ Puente suave"></textarea>
   window.printOfficial = function(){ setPrintTarget("official"); window.print(); };
   window.printMy = function(){ setPrintTarget("my"); window.print(); };
 
-  /* ================== INTEGRANTES ================== */
   const membersCol = collection(db,"members");
 
   function setMemberFormMode(type){
@@ -2307,7 +2307,6 @@ Puente suave"></textarea>
 
   memSearchEl.addEventListener("input", renderMembers);
 
-  /* ================== Firestore listeners ================== */
   onSnapshot(collection(db,"songs"), (snap)=>{
     netStatus.textContent = "✅ Conectado (Firebase)";
     netStatus.className = "status ok";
@@ -2334,7 +2333,6 @@ Puente suave"></textarea>
     const data = snap.exists() ? (snap.data()||{}) : {};
     officialList = normalizeItems(data.items);
     officialMeta = normalizeOfficialMeta(data.meta);
-
     syncOfficialInputsFromMeta();
     renderOfficial();
   });
@@ -2350,7 +2348,6 @@ Puente suave"></textarea>
     renderOfficial();
   });
 
-  /* ================== Init ================== */
   if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
   else setUnlocked(false);
 
