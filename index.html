@@ -5,960 +5,2393 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cancionero Compartido</title>
 <style>
-  body{font-family:system-ui,Arial;margin:20px;max-width:1200px}
-  h1{margin:0 0 6px}
-  .tabs button{margin-right:6px;padding:8px 12px;border-radius:10px;border:1px solid #ccc;cursor:pointer;background:#fff}
-  .hidden{display:none}
-  textarea{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;margin-top:6px}
-  input,select,button{padding:8px;margin-top:6px;border-radius:10px;border:1px solid #ccc}
-  .card{border:1px solid #ddd;padding:15px;border-radius:12px;margin-top:15px}
-  .list-item{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff}
-  .mini{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .status{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #ddd;font-size:12px}
-  .ok{border-color:#bfe7c9;color:#0a7a2f}
-  .warn{border-color:#ffe1b5;color:#b45f06}
-  .muted{color:#666;font-size:12px;line-height:1.35;margin-top:6px}
-  .pill{display:inline-block;border:1px solid #ddd;padding:2px 8px;border-radius:999px;font-size:12px;color:#333;background:#fff}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width: 900px){ .grid2{grid-template-columns:1fr} }
+  :root{
+    --bg:#f7f8fc;
+    --card:#ffffff;
+    --muted:#5b6472;
+    --border:#e6e8ef;
+    --primary:#7aa7ff;
+    --primary2:#7fe0c3;
+    --warn:#ffe1b5;
+    --ok:#bfe7c9;
+    --shadow: 0 8px 22px rgba(17,24,39,.06);
+  }
+  body{font-family:system-ui,Arial;margin:18px;max-width:1200px;background:var(--bg);color:#111827}
+  h1{margin:0 0 6px}
+  .tabs button{
+    margin-right:6px;padding:9px 13px;border-radius:12px;border:1px solid var(--border);
+    cursor:pointer;background:var(--card); box-shadow:0 4px 12px rgba(17,24,39,.04)
+  }
+  .tabs button:hover{transform:translateY(-1px)}
+  .hidden{display:none}
+  textarea{
+    width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;margin-top:6px;
+    border-radius:12px;border:1px solid var(--border); padding:10px; background:var(--card)
+  }
+  input,select,button{padding:9px;margin-top:6px;border-radius:12px;border:1px solid var(--border);background:var(--card)}
+  button{cursor:pointer}
+  button.primary{background:linear-gradient(135deg,var(--primary),#9ac0ff);border-color:#8fb7ff;color:#0b1220;font-weight:700}
+  button.soft{background:linear-gradient(135deg,var(--primary2),#b4f2df);border-color:#a6edd8;color:#0b1220;font-weight:700}
+  .card{border:1px solid var(--border);padding:15px;border-radius:16px;margin-top:14px;background:var(--card);box-shadow:var(--shadow)}
+  .list-item{
+    border:1px solid var(--border);
+    padding:10px;border-radius:14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--card);
+  }
+  .mini{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .status{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;background:var(--card)}
+  .ok{border-color:var(--ok);color:#0a7a2f}
+  .warn{border-color:var(--warn);color:#b45f06}
+  .muted{color:var(--muted);font-size:12px;line-height:1.35;margin-top:6px}
+  .pill{display:inline-block;border:1px solid var(--border);padding:2px 8px;border-radius:999px;font-size:12px;color:#111827;background:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width: 900px){ .grid2{grid-template-columns:1fr} }
 
-  .songbox{border:1px solid #eee;border-radius:12px;padding:12px;background:#fafafa;margin-top:10px}
-  .songbox h4{margin:0 0 6px}
-  .songmeta{font-size:12px;color:#444;margin:0 0 10px}
-  .chordsOnly{
-    white-space:pre-wrap;
-    font-family:ui-monospace,Menlo,monospace;
-    font-size:12px;
-    background:#fff;
-    border:1px solid #eee;
-    padding:10px;
-    border-radius:10px;
-    margin:8px 0 10px;
-  }
-  pre.lyrics{
-    white-space:pre-wrap;
-    font-family:ui-monospace,Menlo,monospace;
-    font-size:12px;
-    background:#fff;
-    border:1px solid #eee;
-    padding:10px;
-    border-radius:10px;
-    margin:0;
-  }
+  .songbox{border:1px solid var(--border);border-radius:16px;padding:12px;background:#fbfcff;margin-top:10px}
+  .songbox h4{margin:0 0 6px}
+  .songmeta{font-size:12px;color:#394151;margin:0 0 10px}
+  .chordsOnly{
+    white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#fff;border:1px solid var(--border);
+    padding:10px;border-radius:12px;margin:8px 0 10px;
+  }
+  pre.lyrics{
+    white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#fff;border:1px solid var(--border);
+    padding:10px;border-radius:12px;margin:0;
+  }
+  .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+  .banner{border:1px solid #d7e6ff;background:#f3f8ff;padding:12px;border-radius:14px;margin:10px 0}
 
-  /* Drag & drop visual */
-  .drag-handle{
-    font-size:18px;
-    padding:4px 8px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    background:#fff;
-    cursor:grab;
-    user-select:none;
-    line-height:1;
-  }
-  .dragging{opacity:.55}
-  .drop-target{outline:2px dashed #999; outline-offset:4px}
+  /* Drag & drop */
+  .drag-handle{
+    font-size:18px;padding:4px 8px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:grab;
+    user-select:none;line-height:1;
+  }
+  .dragging{opacity:.55}
+  .drop-target{outline:2px dashed #9aa3b2; outline-offset:4px}
 
-  /* ===== PRINT (sin duplicados y sin cortes) ===== */
-  @media print{
-    .tabs,.no-print{display:none !important}
-    body{max-width:none;margin:0}
-    .card{border:none;padding:0}
+  /* Favorites */
+  .star{
+    font-size:18px;border:1px solid var(--border);border-radius:12px;padding:4px 10px;background:#fff;cursor:pointer;
+  }
+  .star.on{border-color:#ffd27d;background:#fff7e6}
+  .searchbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .searchbar input{flex:1;min-width:220px}
 
-    /* ocultar la vista de pantalla para que no duplique */
-    #setOrder, #setSongs{display:none !important;}
+  /* Print targeting */
+  .print-area{display:none}
 
-    /* imprimir solo el área de impresión */
-    #printArea{display:block !important;}
-    #printArea.hidden{display:block !important;}
+  /* ===== PRINT (B/N) ===== */
+  @media print{
+    .tabs,.no-print{display:none !important}
+    body{max-width:none;margin:0;background:#fff;color:#000}
+    .card{border:none;padding:0;box-shadow:none;background:#fff}
 
-    .print-block{page-break-inside:avoid;margin:0 0 18px}
-    .print-title{font-size:18px;font-weight:800;margin:0 0 6px}
-    .print-meta{font-size:12px;color:#444;margin:0 0 8px}
+    /* ocultar vista pantalla para evitar duplicados */
+    #officialOrder, #officialSongs, #myOrder, #mySongs{display:none !important;}
 
-    .print-chords-title{font-size:12px;font-weight:800;margin:0 0 6px}
-    .print-chords{
-      white-space:pre-wrap;
-      font-family:ui-monospace,Menlo,monospace;
-      font-size:12px;
-      margin:0 0 10px;
-      padding:10px;
-      border:1px solid #ddd;
-      border-radius:10px;
-    }
+    .print-area{display:none !important;}
+    .print-area.print-target{display:block !important;}
 
-    pre.lyrics{border:1px solid #ddd}
-    hr{border:none;border-top:1px solid #ddd;margin:14px 0}
-  }
+    .print-block{page-break-inside:avoid;margin:0 0 18px}
+    .print-title{font-size:18px;font-weight:800;margin:0 0 6px}
+    .print-meta{font-size:12px;color:#000;margin:0 0 8px}
+
+    .print-chords-title{font-size:12px;font-weight:800;margin:0 0 6px}
+    .print-chords{
+      white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;margin:0 0 10px;
+      padding:10px;border:1px solid #000;border-radius:0;
+    }
+    pre.lyrics{border:1px solid #000;border-radius:0}
+    hr{border:none;border-top:1px solid #000;margin:14px 0}
+    .print-box{border:1px solid #000;padding:10px;margin:12px 0}
+  }
 </style>
 </head>
 <body>
 
 <h1>🎶 Cancionero al día Ministerio de Alabanza CFVN 🎶</h1>
 <div class="mini no-print">
-  <span id="netStatus" class="status warn">Conectando a Firebase…</span>
-  <span id="editStatus" class="status warn">Modo lectura (bloqueado)</span>
+  <span id="netStatus" class="status warn">Conectando a Firebase…</span>
+  <span id="editStatus" class="status warn">Modo lectura (bloqueado)</span>
 </div>
 
 <div class="tabs no-print" style="margin-top:10px">
-  <button onclick="showTab('library')">Biblioteca</button>
-  <button onclick="showTab('today')">Setlist Hoy</button>
-  <button onclick="showTab('config')">Configuración</button>
+  <button onclick="showTab('library')">Biblioteca</button>
+  <button onclick="showTab('official')">Lista de Alabanzas Oficial</button>
+  <button onclick="showTab('my')">Mi Lista de Alabanzas</button>
+  <button onclick="showTab('members')">Integrantes</button>
+  <button onclick="showTab('config')">Configuración</button>
 </div>
 
 <!-- BIBLIOTECA -->
 <div id="library" class="card">
-  <h3 style="margin:0 0 10px">Agregar / Editar canción</h3>
+  <h3 style="margin:0 0 10px">Agregar / Editar canción</h3>
 
-  <label><b>Título</b></label><br>
-  <input id="title" placeholder="Nombre de la canción" style="width:100%">
+  <label><b>Título</b></label><br>
+  <input id="title" placeholder="Nombre de la canción" style="width:100%">
 
-  <div class="mini">
-    <div style="flex:1;min-width:160px">
-      <label><b>Tono original (raíz)</b></label><br>
-      <select id="key" style="width:100%"></select>
-    </div>
+  <div class="mini">
+    <div style="flex:1;min-width:160px">
+      <label><b>Tono original (raíz)</b></label><br>
+      <select id="key" style="width:100%"></select>
+    </div>
 
-    <div style="flex:1;min-width:160px">
-      <label><b>Mayor / Menor</b></label><br>
-      <select id="mode" style="width:100%">
-        <option value="major">Mayor</option>
-        <option value="minor">Menor</option>
-      </select>
-    </div>
+    <div style="flex:1;min-width:160px">
+      <label><b>Mayor / Menor</b></label><br>
+      <select id="mode" style="width:100%">
+        <option value="major">Mayor</option>
+        <option value="minor">Menor</option>
+      </select>
+    </div>
 
-    <div style="flex:1;min-width:160px">
-      <label><b>Preferencia</b></label><br>
-      <select id="prefer" style="width:100%">
-        <option value="sharps">Sostenidos (#)</option>
-        <option value="flats">Bemoles (b)</option>
-      </select>
-    </div>
-  </div>
+    <div style="flex:1;min-width:160px">
+      <label><b>Preferencia</b></label><br>
+      <select id="prefer" style="width:100%">
+        <option value="sharps">Sostenidos (#)</option>
+        <option value="flats">Bemoles (b)</option>
+      </select>
+    </div>
+  </div>
 
-  <button class="no-print" onclick="detectKeyAdvanced()">🎯 Detectar tono automáticamente</button>
+  <div class="mini no-print">
+    <button class="soft" onclick="detectKeyAdvanced()">🎯 Detectar tono automáticamente</button>
+  </div>
 
-  <label style="display:block;margin-top:10px"><b>Letra + acordes</b></label>
-  <textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
+  <label style="display:block;margin-top:10px"><b>Letra + acordes</b></label>
+  <textarea id="body" placeholder="Pegá aquí la letra con acordes"></textarea>
 
-  <div class="mini no-print">
-    <button onclick="saveSong()">Guardar / Actualizar</button>
-    <button onclick="deleteSong()">Eliminar</button>
-    <button onclick="clearForm()">Nueva</button>
-  </div>
+  <div class="mini no-print">
+    <button class="primary" onclick="saveSong()">Guardar / Actualizar</button>
+    <button onclick="deleteSong()">Eliminar</button>
+    <button onclick="clearForm()">Nueva</button>
+  </div>
 
-  <!-- TRANSPOSE (preview) -->
-  <div style="margin-top:12px;border-top:1px dashed #ddd;padding-top:12px">
-    <h3 style="margin:0 0 8px">Transposición (vista previa)</h3>
+  <!-- TRANSPOSE (preview) -->
+  <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:12px">
+    <h3 style="margin:0 0 8px">Transposición (vista previa)</h3>
 
-    <div class="mini">
-      <div style="flex:1;min-width:160px">
-        <label><b>Tono original (solo lectura)</b></label><br>
-        <input id="fromKeyView" readonly style="width:100%">
-      </div>
+    <div class="mini">
+      <div style="flex:1;min-width:160px">
+        <label><b>Tono original (solo lectura)</b></label><br>
+        <input id="fromKeyView" readonly style="width:100%">
+      </div>
 
-      <div style="flex:1;min-width:160px">
-        <label><b>Transponer a</b></label><br>
-        <select id="toKey" style="width:100%"></select>
-      </div>
-    </div>
+      <div style="flex:1;min-width:160px">
+        <label><b>Transponer a</b></label><br>
+        <select id="toKey" style="width:100%"></select>
+      </div>
+    </div>
 
-    <label style="display:block;margin-top:10px"><b>Resultado transpuesto</b></label>
-    <textarea id="transposedOut" readonly placeholder="Aquí verás la canción transpuesta"></textarea>
+    <label style="display:block;margin-top:10px"><b>Resultado transpuesto</b></label>
+    <textarea id="transposedOut" readonly placeholder="Aquí verás la canción transpuesta"></textarea>
 
-    <div class="muted">Esto solo es vista previa. No cambia la canción guardada.</div>
-  </div>
+    <div class="muted">Esto solo es vista previa. No cambia la canción guardada.</div>
+  </div>
 
-  <h3 style="margin:18px 0 10px">Biblioteca</h3>
-  <div id="songList"></div>
+  <div class="divider"></div>
+
+  <div class="searchbar no-print">
+    <input id="searchLib" placeholder="🔎 Buscar en biblioteca (título o contenido)…">
+    <label class="mini" style="margin:0">
+      <input type="checkbox" id="favOnly">
+      <span class="muted" style="margin:0">Solo favoritas</span>
+    </label>
+  </div>
+
+  <h3 style="margin:14px 0 10px">Biblioteca</h3>
+  <div id="songList"></div>
 </div>
 
-<!-- SETLIST HOY -->
-<div id="today" class="card hidden">
-  <div class="grid2 no-print">
-    <div>
-      <h3 style="margin:0 0 10px">Agregar al Setlist (compartido)</h3>
+<!-- LISTA OFICIAL -->
+<div id="official" class="card hidden">
+  <div class="grid2 no-print">
+    <div>
+      <h3 style="margin:0 0 10px">Lista de Alabanzas Oficial (compartida)</h3>
 
-      <div class="mini">
-        <select id="songPicker" style="flex:1;min-width:240px"></select>
-        <button onclick="addToSet()">Agregar</button>
-        <button onclick="clearSet()">Vaciar</button>
-      </div>
+      <label class="muted" style="margin:0">Buscar canción para agregar</label><br>
+      <input id="officialSongSearch" placeholder="🔎 Escribí para filtrar (ej: grande)" style="width:100%">
 
-      <div class="muted">
-        Ahora por defecto queda en el <b>tono original</b>. En el selector aparece primero el original y debajo los demás tonos.
-        <br>Para reordenar: <b>modo edición</b> → arrastrar con el icono ⠿.
-      </div>
+      <div class="mini">
+        <select id="songPickerOfficial" style="flex:1;min-width:240px"></select>
+        <button class="primary" onclick="addToOfficial()">Agregar</button>
+        <button onclick="clearOfficial()">Vaciar</button>
+      </div>
 
-      <div class="mini" style="margin-top:10px">
-        <button onclick="printSetlist()">🖨️ Imprimir setlist</button>
-      </div>
-    </div>
+      <div class="muted">
+        Por defecto queda en el <b>tono original</b>. Para reordenar: <b>modo edición</b> → arrastrar con ⠿.
+      </div>
 
-    <div>
-      <h3 style="margin:0 0 10px">Orden del Setlist</h3>
-      <div id="setOrder"></div>
-      <div id="emptySet" class="muted" style="display:none;margin-top:8px">No hay canciones en el setlist.</div>
-    </div>
-  </div>
+      <div class="mini" style="margin-top:10px">
+        <button class="soft" onclick="printOfficial()">🖨️ Imprimir lista oficial</button>
+      </div>
+    </div>
 
-  <hr class="no-print" style="margin:16px 0;border:none;border-top:1px solid #eee">
+    <div>
+      <h3 style="margin:0 0 10px">Datos del servicio / ensayo</h3>
 
-  <h3 style="margin:0 0 10px">Canciones del Setlist (ACORDES + CANCIÓN)</h3>
-  <div id="setSongs"></div>
+      <label class="muted" style="margin:0">Nombre</label><br>
+      <input id="officialServiceName" placeholder="Ej: Culto Domingo AM / Ensayo Viernes" style="width:100%">
 
-  <!-- PRINT AREA (solo se imprime esto) -->
-  <div id="printArea" class="hidden">
-    <div id="printBlocks"></div>
-  </div>
+      <label class="muted" style="margin:0;display:block;margin-top:6px">Fecha</label>
+      <input id="officialServiceDate" type="date" style="width:100%">
+
+      <div class="divider"></div>
+
+      <h3 style="margin:0 0 10px">Equipo (se imprime arriba)</h3>
+
+      <label class="muted" style="margin:0">Voz principal</label><br>
+      <select id="officialLeadSelect" style="width:100%"></select>
+
+      <label class="muted" style="margin:0;display:block;margin-top:6px">Coro (multi selección)</label>
+      <div id="officialChoirMulti" class="card" style="padding:10px;margin-top:6px;box-shadow:none"></div>
+
+      <div class="divider"></div>
+
+      <h3 style="margin:0 0 10px">Instrumentos</h3>
+
+      <div class="mini" style="align-items:flex-end">
+        <div style="flex:1;min-width:180px">
+          <label class="muted" style="margin:0">Guitarra</label><br>
+          <select id="instGuitarra" style="width:100%"></select>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <label class="muted" style="margin:0">Bajo</label><br>
+          <select id="instBajo" style="width:100%"></select>
+        </div>
+      </div>
+
+      <div class="mini" style="align-items:flex-end">
+        <div style="flex:1;min-width:180px">
+          <label class="muted" style="margin:0">Teclas</label><br>
+          <select id="instTeclas" style="width:100%"></select>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <label class="muted" style="margin:0">Batería</label><br>
+          <select id="instBateria" style="width:100%"></select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="mini" style="align-items:flex-end">
+        <div style="flex:1;min-width:180px">
+          <label class="muted" style="margin:0">Agregar instrumento</label><br>
+          <input id="extraInstName" placeholder="Ej: Saxofón / Violín" style="width:100%">
+        </div>
+        <button class="primary" onclick="addExtraInstrument()">Agregar</button>
+      </div>
+      <div id="extraInstList" style="margin-top:6px"></div>
+
+      <div class="divider"></div>
+
+      <label class="muted" style="margin:0;display:block">Comentarios</label>
+      <textarea id="officialComments" style="min-height:110px" placeholder="Ej:
+Entrada unísono
+Repetir coro final
+Puente suave"></textarea>
+
+      <div class="mini">
+        <button class="primary" onclick="saveOfficialMeta()" id="btnSaveOfficialMeta">Guardar datos</button>
+      </div>
+
+      <div class="muted">Estos datos se comparten con todos y se guardan en Firebase.</div>
+    </div>
+  </div>
+
+  <div class="divider no-print"></div>
+
+  <h3 style="margin:0 0 10px">Orden</h3>
+  <div id="officialOrder"></div>
+  <div id="officialEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en la lista oficial.</div>
+
+  <div class="divider"></div>
+
+  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
+  <div id="officialSongs"></div>
+
+  <div id="officialPrintArea" class="print-area">
+    <div id="officialPrintBlocks"></div>
+  </div>
+</div>
+
+<!-- MI LISTA (PERSONAL) -->
+<div id="my" class="card hidden">
+  <div id="importBanner" class="banner hidden no-print">
+    <div><b>📥 Lista recibida por link</b></div>
+    <div class="muted" id="importBannerText">Estás viendo una lista compartida. Podés guardarla en tu “Mi Lista”.</div>
+    <div class="mini">
+      <button class="primary" onclick="saveImportedToMy('replace')">Guardar (reemplazar mi lista)</button>
+      <button onclick="saveImportedToMy('merge')">Guardar (agregar a mi lista)</button>
+      <button onclick="dismissImportedView()">Cerrar vista del link</button>
+    </div>
+  </div>
+
+  <div class="grid2 no-print">
+    <div>
+      <h3 style="margin:0 0 10px">Mi Lista de Alabanzas (personal)</h3>
+
+      <div class="mini">
+        <select id="songPickerMy" style="flex:1;min-width:240px"></select>
+        <button class="primary" onclick="addToMy()">Agregar</button>
+        <button onclick="clearMy()">Vaciar</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 style="margin:0 0 10px">Datos del servicio / ensayo (personal)</h3>
+      <label class="muted" style="margin:0">Nombre</label><br>
+      <input id="myServiceName" placeholder="Ej: Mi ensayo de guitarra / Domingo AM" style="width:100%">
+
+      <label class="muted" style="margin:0;display:block;margin-top:6px">Fecha</label>
+      <input id="myServiceDate" type="date" style="width:100%">
+
+      <div class="muted">Esto se guarda solo en tu navegador y también viaja en el link si compartís.</div>
+
+      <div class="mini" style="margin-top:10px">
+        <button class="soft" onclick="printMy()">🖨️ Imprimir mi lista</button>
+        <button class="primary" onclick="shareMy()">🔗 Compartir mi lista</button>
+      </div>
+
+      <div id="shareOut" class="muted" style="margin-top:8px"></div>
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 10px">Orden</h3>
+      <div id="myOrder"></div>
+      <div id="myEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en tu lista.</div>
+    </div>
+  </div>
+
+  <div class="divider no-print"></div>
+
+  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
+  <div id="mySongs"></div>
+
+  <div id="myPrintArea" class="print-area">
+    <div id="myPrintBlocks"></div>
+  </div>
+</div>
+
+<!-- INTEGRANTES -->
+<div id="members" class="card hidden">
+  <h3 style="margin:0 0 10px">Integrantes (compartido)</h3>
+  <div class="muted no-print">Todos pueden ver. Para agregar/editar/eliminar necesitás la clave (modo edición).</div>
+
+  <div class="grid2 no-print" style="margin-top:10px">
+    <div>
+      <h3 style="margin:0 0 10px">Agregar / Editar integrante</h3>
+
+      <label class="muted" style="margin:0">Nombre</label><br>
+      <input id="memName" placeholder="Ej: Carlos" style="width:100%">
+
+      <label class="muted" style="margin:0;display:block;margin-top:6px">Tipo</label>
+      <select id="memType" style="width:100%">
+        <option value="cantante">Cantante</option>
+        <option value="musico">Músico</option>
+      </select>
+
+      <div id="cantanteBox" class="card" style="padding:10px;margin-top:10px;box-shadow:none">
+        <div class="mini">
+          <label class="mini" style="margin:0">
+            <input type="checkbox" id="memLead"> <span>Voz principal</span>
+          </label>
+          <label class="mini" style="margin:0">
+            <input type="checkbox" id="memChoir"> <span>Coro</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="musicoBox" class="card" style="padding:10px;margin-top:10px;box-shadow:none">
+        <div class="mini">
+          <label class="mini" style="margin:0">
+            <input type="checkbox" id="memAlsoSings"> <span>También canta</span>
+          </label>
+        </div>
+
+        <div id="musicoSingsBox" class="card hidden" style="padding:10px;margin-top:10px;box-shadow:none">
+          <div class="mini">
+            <label class="mini" style="margin:0">
+              <input type="checkbox" id="memLead2"> <span>Voz principal</span>
+            </label>
+            <label class="mini" style="margin:0">
+              <input type="checkbox" id="memChoir2"> <span>Coro</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="muted">Instrumentos que puede tocar:</div>
+        <div class="mini" style="margin-top:6px">
+          <label class="mini" style="margin:0"><input type="checkbox" class="memInst" value="Guitarra"> Guitarra</label>
+          <label class="mini" style="margin:0"><input type="checkbox" class="memInst" value="Bajo"> Bajo</label>
+          <label class="mini" style="margin:0"><input type="checkbox" class="memInst" value="Teclas"> Teclas</label>
+          <label class="mini" style="margin:0"><input type="checkbox" class="memInst" value="Batería"> Batería</label>
+        </div>
+
+        <div class="mini" style="align-items:flex-end;margin-top:10px">
+          <div style="flex:1;min-width:180px">
+            <label class="muted" style="margin:0">Agregar instrumento extra (opcional)</label><br>
+            <input id="memExtraInst" placeholder="Ej: Saxofón" style="width:100%">
+          </div>
+          <button onclick="addMemberExtraInst()">Agregar</button>
+        </div>
+        <div id="memExtraInstList" class="muted" style="margin-top:8px"></div>
+      </div>
+
+      <div class="mini">
+        <button class="primary" id="btnMemSave" onclick="saveMember()">Guardar</button>
+        <button id="btnMemDelete" onclick="deleteMember()">Eliminar</button>
+        <button onclick="clearMemberForm()">Nuevo</button>
+      </div>
+
+      <div class="muted">Los filtros en la Lista Oficial se basan en estos datos.</div>
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 10px">Lista</h3>
+      <input id="memSearch" placeholder="🔎 Buscar integrante…" style="width:100%">
+      <div id="membersList" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3 style="margin:0 0 10px">Vista rápida</h3>
+  <div id="membersQuick"></div>
 </div>
 
 <!-- CONFIG -->
 <div id="config" class="card hidden">
-  <h3 style="margin:0 0 10px">Clave de edición</h3>
+  <h3 style="margin:0 0 10px">Clave de edición</h3>
 
-  <input id="editKeyInput" placeholder="Escribí la clave" style="width:100%">
-  <div class="mini no-print">
-    <button onclick="unlock()">Desbloquear</button>
-    <button onclick="lockEdit()">Bloquear</button>
-  </div>
+  <input id="editKeyInput" placeholder="Escribí la clave" style="width:100%">
+  <div class="mini no-print">
+    <button class="primary" onclick="unlock()">Desbloquear</button>
+    <button onclick="lockEdit()">Bloquear</button>
+  </div>
 
-  <p class="muted">
-    Clave de edición para permitir Guardar/Eliminar y cambios del setlist.
-  </p>
+  <p class="muted">
+    Clave de edición para permitir Guardar/Eliminar y cambios de la lista oficial e integrantes.
+  </p>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  /* ================== TU FIREBASE ================== */
-  const firebaseConfig = {
-    apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
-    authDomain: "cancionero-compartido.firebaseapp.com",
-    projectId: "cancionero-compartido",
-    storageBucket: "cancionero-compartido.firebasestorage.app",
-    messagingSenderId: "405748067102",
-    appId: "1:405748067102:web:6e2f9754d826b55438770f"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
-
-  /* ================== CLAVE ================== */
-  const EDIT_KEY_MASTER = "CFVN2026";
-
-  /* ================== UI refs ================== */
-  const netStatus = document.getElementById("netStatus");
-  const editStatus = document.getElementById("editStatus");
-
-  const titleEl = document.getElementById("title");
-  const keyEl   = document.getElementById("key");
-  const modeEl  = document.getElementById("mode");
-  const preferEl= document.getElementById("prefer");
-  const bodyEl  = document.getElementById("body");
-
-  const songListEl = document.getElementById("songList");
-  const songPickerEl = document.getElementById("songPicker");
-  const setOrderEl = document.getElementById("setOrder");
-  const setSongsEl = document.getElementById("setSongs");
-  const emptySetEl = document.getElementById("emptySet");
-
-  const editKeyInputEl = document.getElementById("editKeyInput");
-
-  const fromKeyView = document.getElementById("fromKeyView");
-  const toKeySel = document.getElementById("toKey");
-  const transposedOut = document.getElementById("transposedOut");
-
-  const printBlocks = document.getElementById("printBlocks");
-
-  /* ================== Estado ================== */
-  let unlocked = false;
-  let currentId = null;
-  let songsCache = new Map(); // id -> song data
-  let setToday = [];          // [{id,toKey}]
-
-  /* drag state */
-  let dragId = null;
-
-  /* ================== Guardar clave local ================== */
-  const LS_KEY = "cancionero_editkey";
-  const savedKey = localStorage.getItem(LS_KEY);
-  if(savedKey) editKeyInputEl.value = savedKey;
-
-  function setUnlocked(v){
-    unlocked = v;
-    editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
-    editStatus.className = "status " + (v ? "ok" : "warn");
-    renderSetlist();
-  }
-
-  /* ================== Tonos ================== */
-  const NOTES_SHARPS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-  const NOTES_FLATS  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
-  const KEY_OPTIONS  = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
-
-  const NOTE_TO_INDEX = (() => {
-    const map = new Map();
-    NOTES_SHARPS.forEach((n,i)=>map.set(n,i));
-    NOTES_FLATS.forEach((n,i)=>map.set(n,i));
-    return map;
-  })();
-
-  function buildKeySelect(sel){
-    sel.innerHTML = "";
-    KEY_OPTIONS.forEach(k=>{
-      const o=document.createElement("option");
-      o.value=k; o.textContent=k;
-      sel.appendChild(o);
-    });
-  }
-
-  function buildToKeySelect(sel, originalKey){
-    // original primero, luego el resto
-    const orig = originalKey || "C";
-    const list = [orig, ...KEY_OPTIONS.filter(k=>k!==orig)];
-    sel.innerHTML = "";
-    list.forEach(k=>{
-      const o=document.createElement("option");
-      o.value=k; o.textContent=k + (k===orig ? " (original)" : "");
-      sel.appendChild(o);
-    });
-  }
-
-  buildKeySelect(keyEl);
-  buildKeySelect(toKeySel);
-  keyEl.value = "C";
-  modeEl.value = "major";
-  preferEl.value = "sharps";
-  toKeySel.value = "C";
-
-  function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
-  function modeLabel(mode){ return mode==="minor" ? "Menor" : "Mayor"; }
-
-  /* ================== Transposición ================== */
-  const CHORD_TOKEN = /^([A-G](?:#|b)?)([^A-G\/\s]*)(?:\/([A-G](?:#|b)?))?$/;
-
-  function normalizeNote(note){
-    if(!note) return note;
-    note = note.trim();
-    if(note.length===1) return note.toUpperCase();
-    return note[0].toUpperCase()+note.slice(1);
-  }
-
-  function semitoneDistance(fromKey,toKey){
-    const a=NOTE_TO_INDEX.get(normalizeNote(fromKey));
-    const b=NOTE_TO_INDEX.get(normalizeNote(toKey));
-    if(a===undefined||b===undefined) return 0;
-    return b-a;
-  }
-
-  function transposeNote(note,semitones,prefer){
-    note=normalizeNote(note);
-    const idx=NOTE_TO_INDEX.get(note);
-    if(idx===undefined) return note;
-    let newIdx=(idx+semitones)%12; if(newIdx<0) newIdx+=12;
-    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
-    return palette[newIdx];
-  }
-
-  function isChordToken(token){
-    token = token.trim();
-    if(!token) return false;
-    token = token.replace(/[.,;:!?]+$/g,"");
-    if(token.length>18) return false;
-    const m = token.match(CHORD_TOKEN);
-    if(!m) return false;
-    return NOTE_TO_INDEX.has(normalizeNote(m[1]));
-  }
-
-  function transposeChordToken(token, shift, prefer){
-    const punct = (token.match(/[.,;:!?]+$/) || [""])[0];
-    const core  = punct ? token.slice(0,-punct.length) : token;
-    const m = core.match(CHORD_TOKEN);
-    if(!m) return token;
-
-    const root=m[1], suffix=m[2]||"", bass=m[3]||"";
-    const newRoot = transposeNote(root, shift, prefer);
-    const newBass = bass ? transposeNote(bass, shift, prefer) : "";
-    const out = newBass ? `${newRoot}${suffix}/${newBass}` : `${newRoot}${suffix}`;
-    return out + punct;
-  }
-
-  function lineLooksLikeChords(line){
-    const parts = line.split(/(\s+|[|]+)/);
-    const tokens = parts.filter((_,i)=>i%2===0).map(x=>x.trim()).filter(Boolean);
-    if(tokens.length===0) return false;
-
-    let chordCount=0;
-    for(const t of tokens){
-      const sub = t.split("-").filter(Boolean);
-      let ok=0;
-      for(const s of sub) if(isChordToken(s)) ok++;
-      if(ok>0 && ok/sub.length>=0.6) chordCount++;
-    }
-    const ratio = chordCount / tokens.length;
-    return tokens.length>=1 && ratio>=0.6;
-  }
-
-  function transposeChordLine(line, shift, prefer){
-    return line.split(/(\s+|[|]+)/).map(part=>{
-      if(part.match(/^\s+$|^[|]+$/)) return part;
-      return part.split("-").map(p=>{
-        const t=p.trim();
-        return isChordToken(t) ? transposeChordToken(t, shift, prefer) : p;
-      }).join("-");
-    }).join("");
-  }
-
-  function transposeAuto(text, fromKey, toKey, prefer){
-    const shift = semitoneDistance(fromKey, toKey);
-    if(!text) return "";
-    return text.split("\n").map(line=>{
-      return lineLooksLikeChords(line) ? transposeChordLine(line, shift, prefer) : line;
-    }).join("\n");
-  }
-
-  /* ======= extraer solo acordes (del texto ya transpuesto) ======= */
-  function extractChordsOnly(transposedText){
-    const lines = (transposedText || "").split("\n");
-    const chordLines = [];
-
-    for(const line of lines){
-      if(lineLooksLikeChords(line)){
-        chordLines.push(line.trim().replace(/\s{2,}/g," "));
-      }
-    }
-
-    if(chordLines.length === 0){
-      const found = (transposedText || "").match(/\b([A-G](?:#|b)?)(?:maj|min|m|sus|dim|aug|add)?\d*(?:\/[A-G](?:#|b)?)?\b/g);
-      if(found && found.length){
-        const clean = [];
-        for(const c of found){ if(clean.at(-1)!==c) clean.push(c); }
-        return clean.join(" - ");
-      }
-      return "(No se detectaron líneas de acordes)";
-    }
-
-    const compact = [];
-    for(const ln of chordLines){ if(compact.at(-1)!==ln) compact.push(ln); }
-    return compact.join("\n");
-  }
-
-  function updateTransposePreview(){
-    const from = keyEl.value || "C";
-    fromKeyView.value = `${from}${modeSuffix(modeEl.value)} (${modeLabel(modeEl.value)})`;
-    const to = toKeySel.value || "C";
-    const prefer = preferEl.value || "sharps";
-    transposedOut.value = transposeAuto(bodyEl.value || "", from, to, prefer);
-  }
-
-  bodyEl.addEventListener("input", updateTransposePreview);
-  keyEl.addEventListener("change", updateTransposePreview);
-  modeEl.addEventListener("change", updateTransposePreview);
-  preferEl.addEventListener("change", updateTransposePreview);
-  toKeySel.addEventListener("change", updateTransposePreview);
-
-  /* ================== DETECTOR AUTOMÁTICO (Mayor/Menor) — mejorado ================== */
-  function extractChordsFromText(text){
-    const chords = [];
-    const lines = (text||"").split("\n");
-    for(const line of lines){
-      if(!lineLooksLikeChords(line)) continue;
-      const parts = line.split(/(\s+|[|]+)/).filter(p => p && !p.match(/^\s+$|^[|]+$/));
-      for(const part of parts){
-        const subs = part.split("-").map(x=>x.trim()).filter(Boolean);
-        for(const s of subs){
-          if(isChordToken(s)) chords.push(s);
-        }
-      }
-    }
-    return chords;
-  }
-
-  function chordRootPC(chord){
-    const m = chord.match(/^([A-G](?:#|b)?)/);
-    if(!m) return null;
-    const root = normalizeNote(m[1]);
-    const idx = NOTE_TO_INDEX.get(root);
-    return (idx===undefined) ? null : idx;
-  }
-
-  function chordQuality(chord){
-    const m = chord.match(/^([A-G](?:#|b)?)(.*)$/);
-    if(!m) return "unknown";
-    const rest = (m[2]||"");
-    if(rest.startsWith("m") && !rest.startsWith("maj")) return "minor";
-    return "major_or_other";
-  }
-
-  function expectedScalePCs(keyPC, mode){
-    const MAJ = [0,2,4,5,7,9,11];
-    const MIN = [0,2,3,5,7,8,10];
-    const scale = (mode==="major") ? MAJ : MIN;
-    return new Set(scale.map(s => (keyPC+s)%12));
-  }
-
-  function scoreKeyCandidate(chords, keyPC, mode){
-    if(chords.length===0) return -999;
-
-    const counts = new Array(12).fill(0);
-    let minorCount=0, majorCount=0;
-
-    const pcsInOrder = [];
-    for(const c of chords){
-      const pc = chordRootPC(c);
-      if(pc===null) continue;
-      pcsInOrder.push(pc);
-      counts[pc]++;
-
-      const q = chordQuality(c);
-      if(q==="minor") minorCount++;
-      else if(q==="major_or_other") majorCount++;
-    }
-
-    const expected = expectedScalePCs(keyPC, mode);
-    let score = 0;
-
-    for(let pc=0; pc<12; pc++){
-      if(expected.has(pc)) score += counts[pc]*2;
-      else score -= counts[pc]*1.2;
-    }
-
-    // tónica y dominante
-    score += counts[keyPC] * 4;
-    const V = (keyPC + 7) % 12;
-    score += counts[V] * 2.5;
-
-    // primer y último acorde (muy importante)
-    const first = pcsInOrder[0];
-    const last  = pcsInOrder[pcsInOrder.length-1];
-    if(first===keyPC) score += 5;
-    if(last===keyPC)  score += 8;
-
-    // tendencia menor/mayor
-    const totalQual = minorCount + majorCount;
-    if(totalQual>0){
-      const minorRatio = minorCount / totalQual;
-      if(mode==="minor") score += minorRatio * 6;
-      else score += (1-minorRatio) * 2;
-    }
-
-    return score;
-  }
-
-  function detectKeyAndMode(text, prefer){
-    const chords = extractChordsFromText(text);
-
-    if(chords.length === 0){
-      return { ok:false, reason:"No encontré líneas claras de acordes. Tip: poné los acordes en líneas separadas." };
-    }
-
-    let best = { score:-Infinity, keyPC:0, mode:"major" };
-    let bestMaj = { score:-Infinity, keyPC:0, mode:"major" };
-    let bestMin = { score:-Infinity, keyPC:0, mode:"minor" };
-
-    for(let keyPC=0; keyPC<12; keyPC++){
-      const sMaj = scoreKeyCandidate(chords, keyPC, "major");
-      if(sMaj > bestMaj.score) bestMaj = { score:sMaj, keyPC, mode:"major" };
-      if(sMaj > best.score) best = { score:sMaj, keyPC, mode:"major" };
-
-      const sMin = scoreKeyCandidate(chords, keyPC, "minor");
-      if(sMin > bestMin.score) bestMin = { score:sMin, keyPC, mode:"minor" };
-      if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
-    }
-
-    // Heurística anti “relativo menor”:
-    // Si gana el menor, pero el mayor relativo está muy cerca, preferimos el mayor.
-    if(best.mode==="minor"){
-      const relMaj = (best.keyPC + 3) % 12; // Am -> C
-      const relMajScore = scoreKeyCandidate(chords, relMaj, "major");
-      if(relMajScore >= best.score * 0.92){ // “muy cerca”
-        best = { score: relMajScore, keyPC: relMaj, mode: "major" };
-      }
-    }
-
-    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
-    return { ok:true, key: palette[best.keyPC], mode: best.mode, chordsFound: chords.length };
-  }
-
-  window.detectKeyAdvanced = function(){
-    const prefer = preferEl.value || "sharps";
-    const res = detectKeyAndMode(bodyEl.value || "", prefer);
-
-    if(!res.ok){
-      alert(res.reason);
-      return;
-    }
-
-    keyEl.value = res.key;
-    modeEl.value = res.mode;
-
-    alert(`Detectado: ${res.key}${modeSuffix(res.mode)} (${modeLabel(res.mode)}) • Acordes analizados: ${res.chordsFound}`);
-    updateTransposePreview();
-  };
-
-  /* ================== Helpers ================== */
-  function escapeHtml(str){
-    return (str||"").replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[s]));
-  }
-  function getSong(id){ return songsCache.get(id) || null; }
-
-  /* ================== Tabs / Config ================== */
-  window.showTab = function(name){
-    document.getElementById("library").classList.add("hidden");
-    document.getElementById("today").classList.add("hidden");
-    document.getElementById("config").classList.add("hidden");
-    document.getElementById(name).classList.remove("hidden");
-    if(name==="today") renderSetlist();
-  };
-
-  window.unlock = function(){
-    const k = (editKeyInputEl.value || "").trim();
-    if(k === EDIT_KEY_MASTER){
-      localStorage.setItem(LS_KEY, k);
-      setUnlocked(true);
-      alert("✅ Modo edición activado");
-    } else {
-      setUnlocked(false);
-      alert("Clave incorrecta");
-    }
-  };
-
-  window.lockEdit = function(){
-    localStorage.removeItem(LS_KEY);
-    editKeyInputEl.value = "";
-    setUnlocked(false);
-  };
-
-  /* ================== Biblioteca (Guardar/Eliminar/Cargar) ================== */
-  window.clearForm = function(){
-    currentId = null;
-    titleEl.value = "";
-    bodyEl.value = "";
-    keyEl.value = "C";
-    modeEl.value = "major";
-    preferEl.value = "sharps";
-    toKeySel.value = "C";
-    updateTransposePreview();
-  };
-
-  window.saveSong = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    const title = (titleEl.value || "").trim();
-    const body  = (bodyEl.value || "").trim();
-    if(!title && !body){ alert("Poné título o contenido."); return; }
-
-    const id = currentId || (crypto.randomUUID ? crypto.randomUUID() : ("s_"+Date.now()+Math.random().toString(16).slice(2)));
-
-    await setDoc(doc(db,"songs",id),{
-      title,
-      key: keyEl.value,
-      mode: modeEl.value,
-      prefer: preferEl.value,
-      body,
-      deleted: false
-    }, { merge:true });
-
-    currentId = id;
-    alert("✅ Guardado (compartido)");
-  };
-
-  window.deleteSong = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    if(!currentId){ alert("No hay canción cargada."); return; }
-    if(!confirm("¿Eliminar esta canción?")) return;
-
-    await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
-
-    setToday = setToday.filter(x=>x.id!==currentId);
-    await saveSetlist();
-
-    window.clearForm();
-  };
-
-  window.loadSong = async function(id){
-    const snap = await getDoc(doc(db,"songs",id));
-    if(!snap.exists()) return;
-    const d = snap.data();
-    currentId = id;
-    titleEl.value = d.title || "";
-    keyEl.value   = d.key || "C";
-    modeEl.value  = d.mode || "major";
-    preferEl.value= d.prefer || "sharps";
-    bodyEl.value  = d.body || "";
-    updateTransposePreview();
-    window.showTab("library");
-  };
-
-  /* ================== Setlist compartido ================== */
-  const setRef = doc(db,"shared","today");
-
-  function normalizeSetItems(items){
-    if(!Array.isArray(items)) return [];
-    if(items.length===0) return [];
-    if(typeof items[0] === "string"){
-      return items.map(id=>({id, toKey:null}));
-    }
-    return items
-      .filter(x=>x && typeof x.id === "string")
-      .map(x=>({ id:x.id, toKey: x.toKey ?? null }));
-  }
-
-  async function saveSetlist(){
-    await setDoc(setRef, { items: setToday }, { merge:true });
-  }
-
-  window.addToSet = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    const id = songPickerEl.value;
-    if(!id){ alert("Elegí una canción."); return; }
-    if(setToday.some(x=>x.id===id)){ alert("Ya está en el setlist."); return; }
-
-    const s = getSong(id);
-    const defaultTo = s?.key || "C"; // ✅ ahora por defecto: tono original
-    setToday = [...setToday, {id, toKey: defaultTo}];
-    await saveSetlist();
-  };
-
-  window.clearSet = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    if(!confirm("¿Vaciar setlist?")) return;
-    setToday = [];
-    await saveSetlist();
-  };
-
-  window.setToKey = async function(id, toKey){
-    const entry = setToday.find(x=>x.id===id);
-    if(!entry) return;
-    entry.toKey = toKey;
-    setToday = setToday.map(x=> x.id===id ? entry : x);
-    if(unlocked) await saveSetlist();
-    renderSetlist();
-  };
-
-  window.removeFromSet = async function(id){
-    if(!unlocked) return;
-    setToday = setToday.filter(x=>x.id!==id);
-    await saveSetlist();
-  };
-
-  window.printSetlist = function(){
-    window.print();
-  };
-
-  /* ================== Drag & Drop reorder ================== */
-  async function reorderSetlist(draggedId, targetId){
-    if(!unlocked) return;
-
-    const from = setToday.findIndex(x=>x.id===draggedId);
-    const to   = setToday.findIndex(x=>x.id===targetId);
-    if(from<0 || to<0 || from===to) return;
-
-    const arr = setToday.slice();
-    const [moved] = arr.splice(from, 1);
-    arr.splice(to, 0, moved);
-    setToday = arr;
-
-    await saveSetlist();
-    renderSetlist();
-  }
-
-  function attachDragHandlers(row){
-    if(!unlocked) return;
-
-    row.addEventListener("dragstart", (e)=>{
-      dragId = row.dataset.id;
-      row.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", dragId);
-    });
-
-    row.addEventListener("dragend", ()=>{
-      dragId = null;
-      row.classList.remove("dragging");
-      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
-    });
-
-    row.addEventListener("dragover", (e)=>{
-      e.preventDefault();
-      row.classList.add("drop-target");
-      e.dataTransfer.dropEffect = "move";
-    });
-
-    row.addEventListener("dragleave", ()=>{
-      row.classList.remove("drop-target");
-    });
-
-    row.addEventListener("drop", async (e)=>{
-      e.preventDefault();
-      row.classList.remove("drop-target");
-      const dragged = e.dataTransfer.getData("text/plain") || dragId;
-      const target = row.dataset.id;
-      await reorderSetlist(dragged, target);
-    });
-  }
-
-  function renderSetlist(){
-    setOrderEl.innerHTML = "";
-    setSongsEl.innerHTML = "";
-    printBlocks.innerHTML = "";
-
-    const visible = setToday.filter(x=>getSong(x.id));
-    emptySetEl.style.display = (visible.length===0) ? "block" : "none";
-
-    visible.forEach((entry, idx)=>{
-      const s = getSong(entry.id);
-      const isMin = (s.mode==="minor");
-      const originalKey = s.key || "C";
-
-      // ✅ si venía viejo / null → usamos original como default (sin forzar guardar)
-      const toKeyRaw = entry.toKey || originalKey;
-
-      const originalKeyLabel = originalKey + (isMin ? "m" : "");
-      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
-      const prefer = s.prefer || "sharps";
-
-      const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
-      const chordsOnly = extractChordsOnly(transposed);
-
-      // Orden / controles
-      const row = document.createElement("div");
-      row.className = "list-item";
-      row.dataset.id = entry.id;
-
-      // draggable solo en modo edición
-      row.draggable = !!unlocked;
-
-      row.innerHTML = `
-        <div style="display:flex;gap:10px;align-items:center">
-          <span class="drag-handle" title="${unlocked ? "Arrastrar para ordenar" : "Activa modo edición para arrastrar"}">⠿</span>
-          <div>
-            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
-            <div class="muted">
-              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
-              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
-            </div>
-          </div>
-        </div>
-        <div class="mini">
-          <label class="muted" style="margin:0">Tocar en:</label>
-          <select data-id="${entry.id}" ${unlocked ? "" : "disabled"} style="min-width:170px"></select>
-          <button onclick="removeFromSet('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
-        </div>
-      `;
-      setOrderEl.appendChild(row);
-
-      // activar drag handlers
-      attachDragHandlers(row);
-
-      const sel = row.querySelector("select");
-      buildToKeySelect(sel, originalKey);  // ✅ original primero
-      sel.value = toKeyRaw;
-      sel.addEventListener("change", ()=> window.setToKey(entry.id, sel.value));
-
-      // Vista en pantalla (ACORDES + CANCIÓN)
-      const box = document.createElement("div");
-      box.className = "songbox";
-      box.innerHTML = `
-        <h4>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</h4>
-        <div class="songmeta">
-          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
-          Tocar en: <b>${escapeHtml(toKeyLabel)}</b> (${modeLabel(s.mode)})
-        </div>
-
-        <div class="print-chords-title">ACORDES</div>
-        <div class="chordsOnly">${escapeHtml(chordsOnly)}</div>
-
-        <div class="print-chords-title">CANCIÓN</div>
-        <pre class="lyrics">${escapeHtml(transposed)}</pre>
-      `;
-      setSongsEl.appendChild(box);
-
-      // Bloque impresión (solo se imprime esto)
-      const block = document.createElement("div");
-      block.className = "print-block";
-      block.innerHTML = `
-        <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
-        <div class="print-meta">
-          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
-          Tocar en: ${escapeHtml(toKeyLabel)} (${modeLabel(s.mode)})
-        </div>
-
-        <div class="print-chords-title">ACORDES</div>
-        <div class="print-chords">${escapeHtml(chordsOnly)}</div>
-
-        <div class="print-chords-title">CANCIÓN</div>
-        <pre class="lyrics">${escapeHtml(transposed)}</pre>
-        <hr />
-      `;
-      printBlocks.appendChild(block);
-    });
-  }
-
-  /* ================== Firestore listeners ================== */
-  onSnapshot(collection(db,"songs"), (snap)=>{
-    netStatus.textContent = "✅ Conectado (Firebase)";
-    netStatus.className = "status ok";
-
-    songsCache.clear();
-    songListEl.innerHTML = "";
-    songPickerEl.innerHTML = "";
-
-    snap.forEach(docu=>{
-      const d = docu.data();
-      if(d.deleted) return;
-
-      songsCache.set(docu.id, d);
-
-      const tonal = (d.key||"") + (d.mode==="minor" ? "m" : "");
-      const div=document.createElement("div");
-      div.className="list-item";
-      div.innerHTML = `
-        <div>
-          <div><b>${escapeHtml(d.title||"(Sin título)")}</b></div>
-          <div class="muted">Tono: ${escapeHtml(tonal)} (${modeLabel(d.mode)})</div>
-        </div>
-        <div class="mini">
-          <button onclick="loadSong('${docu.id}')">Abrir</button>
-        </div>
-      `;
-      songListEl.appendChild(div);
-
-      const opt=document.createElement("option");
-      opt.value=docu.id;
-      opt.textContent=d.title || "(Sin título)";
-      songPickerEl.appendChild(opt);
-    });
-
-    updateTransposePreview();
-    renderSetlist();
-  }, (err)=>{
-    console.error(err);
-    netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
-    netStatus.className = "status warn";
-  });
-
-  onSnapshot(setRef, async (snap)=>{
-    const itemsRaw = (snap.exists() ? snap.data()?.items : null);
-    const normalized = normalizeSetItems(itemsRaw);
-
-    const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
-    setToday = normalized;
-
-    if(wasOld){
-      try { await saveSetlist(); } catch(e){ console.warn("No pude migrar setlist:", e); }
-    }
-    renderSetlist();
-  });
-
-  // auto-desbloqueo si ya guardaste la clave correcta
-  if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
-  else setUnlocked(false);
-
-  updateTransposePreview();
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  /* ================== FIREBASE ================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC-nnf9i0PjZ_StHjztBUO4pnaBFKRbseE",
+    authDomain: "cancionero-compartido.firebaseapp.com",
+    projectId: "cancionero-compartido",
+    storageBucket: "cancionero-compartido.firebasestorage.app",
+    messagingSenderId: "405748067102",
+    appId: "1:405748067102:web:6e2f9754d826b55438770f"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  /* ================== CLAVE ================== */
+  const EDIT_KEY_MASTER = "CFVN2026";
+
+  /* ================== UI refs ================== */
+  const netStatus = document.getElementById("netStatus");
+  const editStatus = document.getElementById("editStatus");
+
+  const titleEl = document.getElementById("title");
+  const keyEl   = document.getElementById("key");
+  const modeEl  = document.getElementById("mode");
+  const preferEl= document.getElementById("prefer");
+  const bodyEl  = document.getElementById("body");
+
+  const songListEl = document.getElementById("songList");
+  const searchLibEl = document.getElementById("searchLib");
+  const favOnlyEl = document.getElementById("favOnly");
+
+  const officialSongSearchEl = document.getElementById("officialSongSearch");
+  const songPickerOfficialEl = document.getElementById("songPickerOfficial");
+  const officialOrderEl = document.getElementById("officialOrder");
+  const officialSongsEl = document.getElementById("officialSongs");
+  const officialEmptyEl = document.getElementById("officialEmpty");
+  const officialPrintArea = document.getElementById("officialPrintArea");
+  const officialPrintBlocks = document.getElementById("officialPrintBlocks");
+
+  const officialServiceNameEl = document.getElementById("officialServiceName");
+  const officialServiceDateEl = document.getElementById("officialServiceDate");
+  const officialLeadSelectEl  = document.getElementById("officialLeadSelect");
+  const officialChoirMultiEl  = document.getElementById("officialChoirMulti");
+
+  const instGuitarraEl = document.getElementById("instGuitarra");
+  const instBajoEl     = document.getElementById("instBajo");
+  const instTeclasEl   = document.getElementById("instTeclas");
+  const instBateriaEl  = document.getElementById("instBateria");
+
+  const extraInstNameEl = document.getElementById("extraInstName");
+  const extraInstListEl = document.getElementById("extraInstList");
+
+  const officialCommentsEl = document.getElementById("officialComments");
+  const btnSaveOfficialMeta = document.getElementById("btnSaveOfficialMeta");
+
+  const songPickerMyEl = document.getElementById("songPickerMy");
+  const myOrderEl = document.getElementById("myOrder");
+  const mySongsEl = document.getElementById("mySongs");
+  const myEmptyEl = document.getElementById("myEmpty");
+  const myPrintArea = document.getElementById("myPrintArea");
+  const myPrintBlocks = document.getElementById("myPrintBlocks");
+  const shareOutEl = document.getElementById("shareOut");
+
+  const myServiceNameEl = document.getElementById("myServiceName");
+  const myServiceDateEl = document.getElementById("myServiceDate");
+
+  const importBannerEl = document.getElementById("importBanner");
+  const importBannerTextEl = document.getElementById("importBannerText");
+  const editKeyInputEl = document.getElementById("editKeyInput");
+
+  const fromKeyView = document.getElementById("fromKeyView");
+  const toKeySel = document.getElementById("toKey");
+  const transposedOut = document.getElementById("transposedOut");
+
+  /* Integrantes UI */
+  const memNameEl = document.getElementById("memName");
+  const memTypeEl = document.getElementById("memType");
+  const cantanteBoxEl = document.getElementById("cantanteBox");
+  const musicoBoxEl = document.getElementById("musicoBox");
+  const memLeadEl = document.getElementById("memLead");
+  const memChoirEl = document.getElementById("memChoir");
+  const memAlsoSingsEl = document.getElementById("memAlsoSings");
+  const musicoSingsBoxEl = document.getElementById("musicoSingsBox");
+  const memLead2El = document.getElementById("memLead2");
+  const memChoir2El = document.getElementById("memChoir2");
+  const memExtraInstEl = document.getElementById("memExtraInst");
+  const memExtraInstListEl = document.getElementById("memExtraInstList");
+  const membersListEl = document.getElementById("membersList");
+  const membersQuickEl = document.getElementById("membersQuick");
+  const memSearchEl = document.getElementById("memSearch");
+  const btnMemSave = document.getElementById("btnMemSave");
+  const btnMemDelete = document.getElementById("btnMemDelete");
+
+  /* ================== Estado ================== */
+  let unlocked = false;
+  let currentId = null;
+
+  let songsCache = new Map();       // id -> song data
+  let membersCache = new Map();     // id -> member data
+
+  let officialList = [];            // firestore items [{id,toKey}]
+  let officialMeta = {
+    serviceName:"",
+    serviceDate:"",
+    leadId:"",
+    choirIds:[],
+    instruments:{ Guitarra:"", Bajo:"", Teclas:"", "Batería":"" },
+    extraInstruments:[],            // [{name, memberId}]
+    comments:""
+  };
+
+  let myList = [];                  // local items [{id,toKey}]
+  let importedList = null;
+  let showImported = false;
+
+  let dragOfficialId = null;
+  let dragMyId = null;
+
+  /* Integrantes form state */
+  let editingMemberId = null;
+  let memberExtraInstruments = []; // extra instruments list in member form
+
+  /* ================== Local Storage Keys ================== */
+  const LS_EDIT = "cancionero_editkey";
+  const LS_MY_LIST = "cfvn_my_list_v2";
+  const LS_MY_META = "cfvn_my_meta_v1";
+  const LS_FAVS = "cfvn_favs_v1";
+
+  /* ================== Saved edit key ================== */
+  const savedKey = localStorage.getItem(LS_EDIT);
+  if(savedKey) editKeyInputEl.value = savedKey;
+
+  function setUnlocked(v){
+    unlocked = v;
+    editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
+    editStatus.className = "status " + (v ? "ok" : "warn");
+
+    // bloquear / desbloquear inputs oficiales e integrantes
+    const dis = !v;
+    [
+      officialServiceNameEl, officialServiceDateEl,
+      officialLeadSelectEl, officialCommentsEl,
+      instGuitarraEl, instBajoEl, instTeclasEl, instBateriaEl,
+      extraInstNameEl
+    ].forEach(el => el.disabled = dis);
+    btnSaveOfficialMeta.disabled = dis;
+
+    // integrantes
+    [memNameEl, memTypeEl, memLeadEl, memChoirEl, memAlsoSingsEl, memLead2El, memChoir2El, memExtraInstEl]
+      .forEach(el => el.disabled = dis);
+    document.querySelectorAll(".memInst").forEach(el => el.disabled = dis);
+    btnMemSave.disabled = dis;
+    btnMemDelete.disabled = dis;
+
+    renderOfficial();
+    renderMembers();
+  }
+
+  /* ================== Helpers ================== */
+  function escapeHtml(str){
+    return (str||"").replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[s]));
+  }
+  function stripAccents(s){ return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+  function normalizeTitle(s){ return stripAccents((s||"").trim().toLowerCase()).replace(/\s+/g," "); }
+  function fmtDateISO(iso){
+    if(!iso) return "";
+    const [y,m,d] = iso.split("-");
+    if(!y||!m||!d) return iso;
+    return `${d}/${m}/${y}`;
+  }
+  function getSong(id){ return songsCache.get(id) || null; }
+  function getMember(id){ return membersCache.get(id) || null; }
+
+  /* ================== Tabs ================== */
+  window.showTab = function(name){
+    ["library","official","my","members","config"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+    document.getElementById(name).classList.remove("hidden");
+    if(name==="official") renderOfficial();
+    if(name==="my") renderMy();
+    if(name==="members") renderMembers();
+  };
+
+  /* ================== Config ================== */
+  window.unlock = function(){
+    const k = (editKeyInputEl.value || "").trim();
+    if(k === EDIT_KEY_MASTER){
+      localStorage.setItem(LS_EDIT, k);
+      setUnlocked(true);
+      alert("✅ Modo edición activado");
+    } else {
+      setUnlocked(false);
+      alert("Clave incorrecta");
+    }
+  };
+
+  window.lockEdit = function(){
+    localStorage.removeItem(LS_EDIT);
+    editKeyInputEl.value = "";
+    setUnlocked(false);
+  };
+
+  /* ================== Tonos ================== */
+  const NOTES_SHARPS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const NOTES_FLATS  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+  const KEY_OPTIONS  = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
+  const NOTE_TO_INDEX = (() => {
+    const map = new Map();
+    NOTES_SHARPS.forEach((n,i)=>map.set(n,i));
+    NOTES_FLATS.forEach((n,i)=>map.set(n,i));
+    return map;
+  })();
+
+  function buildKeySelect(sel){
+    sel.innerHTML = "";
+    KEY_OPTIONS.forEach(k=>{
+      const o=document.createElement("option");
+      o.value=k; o.textContent=k;
+      sel.appendChild(o);
+    });
+  }
+  function buildToKeySelect(sel, originalKey){
+    const orig = originalKey || "C";
+    const list = [orig, ...KEY_OPTIONS.filter(k=>k!==orig)];
+    sel.innerHTML = "";
+    list.forEach(k=>{
+      const o=document.createElement("option");
+      o.value=k;
+      o.textContent = k + (k===orig ? " (original)" : "");
+      sel.appendChild(o);
+    });
+  }
+
+  buildKeySelect(keyEl);
+  buildKeySelect(toKeySel);
+  keyEl.value = "C";
+  modeEl.value = "major";
+  preferEl.value = "sharps";
+  toKeySel.value = "C";
+
+  function modeSuffix(mode){ return mode==="minor" ? "m" : ""; }
+  function modeLabel(mode){ return mode==="minor" ? "Menor" : "Mayor"; }
+
+  /* ================== Transposición ================== */
+  const CHORD_TOKEN = /^([A-G](?:#|b)?)([^A-G\/\s]*)(?:\/([A-G](?:#|b)?))?$/;
+
+  function normalizeNote(note){
+    if(!note) return note;
+    note = note.trim();
+    if(note.length===1) return note.toUpperCase();
+    return note[0].toUpperCase()+note.slice(1);
+  }
+  function semitoneDistance(fromKey,toKey){
+    const a=NOTE_TO_INDEX.get(normalizeNote(fromKey));
+    const b=NOTE_TO_INDEX.get(normalizeNote(toKey));
+    if(a===undefined||b===undefined) return 0;
+    return b-a;
+  }
+  function transposeNote(note,semitones,prefer){
+    note=normalizeNote(note);
+    const idx=NOTE_TO_INDEX.get(note);
+    if(idx===undefined) return note;
+    let newIdx=(idx+semitones)%12; if(newIdx<0) newIdx+=12;
+    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
+    return palette[newIdx];
+  }
+  function isChordToken(token){
+    token = token.trim();
+    if(!token) return false;
+    token = token.replace(/[.,;:!?]+$/g,"");
+    if(token.length>18) return false;
+    const m = token.match(CHORD_TOKEN);
+    if(!m) return false;
+    return NOTE_TO_INDEX.has(normalizeNote(m[1]));
+  }
+  function transposeChordToken(token, shift, prefer){
+    const punct = (token.match(/[.,;:!?]+$/) || [""])[0];
+    const core  = punct ? token.slice(0,-punct.length) : token;
+    const m = core.match(CHORD_TOKEN);
+    if(!m) return token;
+
+    const root=m[1], suffix=m[2]||"", bass=m[3]||"";
+    const newRoot = transposeNote(root, shift, prefer);
+    const newBass = bass ? transposeNote(bass, shift, prefer) : "";
+    const out = newBass ? `${newRoot}${suffix}/${newBass}` : `${newRoot}${suffix}`;
+    return out + punct;
+  }
+  function lineLooksLikeChords(line){
+    const parts = line.split(/(\s+|[|]+)/);
+    const tokens = parts.filter((_,i)=>i%2===0).map(x=>x.trim()).filter(Boolean);
+    if(tokens.length===0) return false;
+
+    let chordCount=0;
+    for(const t of tokens){
+      const sub = t.split("-").filter(Boolean);
+      let ok=0;
+      for(const s of sub) if(isChordToken(s)) ok++;
+      if(ok>0 && ok/sub.length>=0.6) chordCount++;
+    }
+    const ratio = chordCount / tokens.length;
+    return tokens.length>=1 && ratio>=0.6;
+  }
+  function transposeChordLine(line, shift, prefer){
+    return line.split(/(\s+|[|]+)/).map(part=>{
+      if(part.match(/^\s+$|^[|]+$/)) return part;
+      return part.split("-").map(p=>{
+        const t=p.trim();
+        return isChordToken(t) ? transposeChordToken(t, shift, prefer) : p;
+      }).join("-");
+    }).join("");
+  }
+  function transposeAuto(text, fromKey, toKey, prefer){
+    const shift = semitoneDistance(fromKey, toKey);
+    if(!text) return "";
+    return text.split("\n").map(line=>{
+      return lineLooksLikeChords(line) ? transposeChordLine(line, shift, prefer) : line;
+    }).join("\n");
+  }
+  function extractChordsOnly(transposedText){
+    const lines = (transposedText || "").split("\n");
+    const chordLines = [];
+
+    for(const line of lines){
+      if(lineLooksLikeChords(line)){
+        chordLines.push(line.trim().replace(/\s{2,}/g," "));
+      }
+    }
+
+    if(chordLines.length === 0){
+      const found = (transposedText || "").match(/\b([A-G](?:#|b)?)(?:maj|min|m|sus|dim|aug|add)?\d*(?:\/[A-G](?:#|b)?)?\b/g);
+      if(found && found.length){
+        const clean = [];
+        for(const c of found){ if(clean.at(-1)!==c) clean.push(c); }
+        return clean.join(" - ");
+      }
+      return "(No se detectaron líneas de acordes)";
+    }
+
+    const compact = [];
+    for(const ln of chordLines){ if(compact.at(-1)!==ln) compact.push(ln); }
+    return compact.join("\n");
+  }
+  function updateTransposePreview(){
+    const from = keyEl.value || "C";
+    fromKeyView.value = `${from}${modeSuffix(modeEl.value)} (${modeLabel(modeEl.value)})`;
+    const to = toKeySel.value || "C";
+    const prefer = preferEl.value || "sharps";
+    transposedOut.value = transposeAuto(bodyEl.value || "", from, to, prefer);
+  }
+  bodyEl.addEventListener("input", updateTransposePreview);
+  keyEl.addEventListener("change", updateTransposePreview);
+  modeEl.addEventListener("change", updateTransposePreview);
+  preferEl.addEventListener("change", updateTransposePreview);
+  toKeySel.addEventListener("change", updateTransposePreview);
+
+  /* ================== Detector tono (mejorado) ================== */
+  function extractChordsFromText(text){
+    const chords = [];
+    const lines = (text||"").split("\n");
+    for(const line of lines){
+      if(!lineLooksLikeChords(line)) continue;
+      const parts = line.split(/(\s+|[|]+)/).filter(p => p && !p.match(/^\s+$|^[|]+$/));
+      for(const part of parts){
+        const subs = part.split("-").map(x=>x.trim()).filter(Boolean);
+        for(const s of subs){
+          if(isChordToken(s)) chords.push(s);
+        }
+      }
+    }
+    return chords;
+  }
+  function chordRootPC(chord){
+    const m = chord.match(/^([A-G](?:#|b)?)/);
+    if(!m) return null;
+    const root = normalizeNote(m[1]);
+    const idx = NOTE_TO_INDEX.get(root);
+    return (idx===undefined) ? null : idx;
+  }
+  function chordQuality(chord){
+    const m = chord.match(/^([A-G](?:#|b)?)(.*)$/);
+    if(!m) return "unknown";
+    const rest = (m[2]||"");
+    if(rest.startsWith("m") && !rest.startsWith("maj")) return "minor";
+    return "major_or_other";
+  }
+  function expectedScalePCs(keyPC, mode){
+    const MAJ = [0,2,4,5,7,9,11];
+    const MIN = [0,2,3,5,7,8,10];
+    const scale = (mode==="major") ? MAJ : MIN;
+    return new Set(scale.map(s => (keyPC+s)%12));
+  }
+  function scoreKeyCandidate(chords, keyPC, mode){
+    if(chords.length===0) return -999;
+    const counts = new Array(12).fill(0);
+    let minorCount=0, majorCount=0;
+
+    const pcsInOrder = [];
+    for(const c of chords){
+      const pc = chordRootPC(c);
+      if(pc===null) continue;
+      pcsInOrder.push(pc);
+      counts[pc]++;
+
+      const q = chordQuality(c);
+      if(q==="minor") minorCount++;
+      else if(q==="major_or_other") majorCount++;
+    }
+
+    const expected = expectedScalePCs(keyPC, mode);
+    let score = 0;
+
+    for(let pc=0; pc<12; pc++){
+      if(expected.has(pc)) score += counts[pc]*2;
+      else score -= counts[pc]*1.2;
+    }
+
+    score += counts[keyPC] * 4;
+    const V = (keyPC + 7) % 12;
+    score += counts[V] * 2.5;
+
+    const first = pcsInOrder[0];
+    const last  = pcsInOrder[pcsInOrder.length-1];
+    if(first===keyPC) score += 5;
+    if(last===keyPC)  score += 8;
+
+    const totalQual = minorCount + majorCount;
+    if(totalQual>0){
+      const minorRatio = minorCount / totalQual;
+      if(mode==="minor") score += minorRatio * 6;
+      else score += (1-minorRatio) * 2;
+    }
+    return score;
+  }
+  function detectKeyAndMode(text, prefer){
+    const chords = extractChordsFromText(text);
+    if(chords.length === 0){
+      return { ok:false, reason:"No encontré líneas claras de acordes. Tip: poné los acordes en líneas separadas." };
+    }
+    let best = { score:-Infinity, keyPC:0, mode:"major" };
+    for(let keyPC=0; keyPC<12; keyPC++){
+      const sMaj = scoreKeyCandidate(chords, keyPC, "major");
+      if(sMaj > best.score) best = { score:sMaj, keyPC, mode:"major" };
+      const sMin = scoreKeyCandidate(chords, keyPC, "minor");
+      if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
+    }
+    // anti relativo menor
+    if(best.mode==="minor"){
+      const relMaj = (best.keyPC + 3) % 12;
+      const relMajScore = scoreKeyCandidate(chords, relMaj, "major");
+      if(relMajScore >= best.score * 0.92){
+        best = { score: relMajScore, keyPC: relMaj, mode: "major" };
+      }
+    }
+    const palette = (prefer==="flats") ? NOTES_FLATS : NOTES_SHARPS;
+    return { ok:true, key: palette[best.keyPC], mode: best.mode, chordsFound: chords.length };
+  }
+  window.detectKeyAdvanced = function(){
+    const prefer = preferEl.value || "sharps";
+    const res = detectKeyAndMode(bodyEl.value || "", prefer);
+    if(!res.ok){ alert(res.reason); return; }
+    keyEl.value = res.key;
+    modeEl.value = res.mode;
+    alert(`Detectado: ${res.key}${modeSuffix(res.mode)} (${modeLabel(res.mode)}) • Acordes analizados: ${res.chordsFound}`);
+    updateTransposePreview();
+  };
+
+  /* ================== Favoritos (personales) ================== */
+  function loadFavs(){
+    try{
+      const raw = localStorage.getItem(LS_FAVS);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    }catch(e){ return new Set(); }
+  }
+  function saveFavs(set){
+    try{ localStorage.setItem(LS_FAVS, JSON.stringify([...set])); }catch(e){}
+  }
+  let favs = loadFavs();
+  window.toggleFav = function(id){
+    if(favs.has(id)) favs.delete(id); else favs.add(id);
+    saveFavs(favs);
+    renderLibraryList();
+    fillPickers();
+    filterOfficialPicker();
+  };
+
+  /* ================== Biblioteca (Guardar/Eliminar/Cargar) ================== */
+  window.clearForm = function(){
+    currentId = null;
+    titleEl.value = "";
+    bodyEl.value = "";
+    keyEl.value = "C";
+    modeEl.value = "major";
+    preferEl.value = "sharps";
+    toKeySel.value = "C";
+    updateTransposePreview();
+  };
+
+  async function duplicateCheckFlow(newTitle){
+    const norm = normalizeTitle(newTitle);
+    if(!norm) return true;
+    const matches = [];
+    for(const [id,d] of songsCache.entries()){
+      if(d?.deleted) continue;
+      const t = normalizeTitle(d.title||"");
+      if(t && t === norm && id !== currentId){
+        matches.push({id, title:d.title||"(Sin título)"});
+      }
+    }
+    if(matches.length===0) return true;
+
+    const first = matches[0];
+    const msg =
+      `⚠️ Posible duplicado\n\n`+
+      `Ya existe una canción con el mismo título:\n`+
+      `• ${first.title}\n\n`+
+      `OK = Abrir la existente\n`+
+      `Cancelar = Guardar de todas formas`;
+    const openExisting = confirm(msg);
+    if(openExisting){
+      await window.loadSong(first.id);
+      return false;
+    }
+    return true;
+  }
+
+  window.saveSong = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const title = (titleEl.value || "").trim();
+    const body  = (bodyEl.value || "").trim();
+    if(!title && !body){ alert("Poné título o contenido."); return; }
+
+    const ok = await duplicateCheckFlow(title);
+    if(!ok) return;
+
+    const id = currentId || (crypto.randomUUID ? crypto.randomUUID() : ("s_"+Date.now()+Math.random().toString(16).slice(2)));
+
+    await setDoc(doc(db,"songs",id),{
+      title,
+      key: keyEl.value,
+      mode: modeEl.value,
+      prefer: preferEl.value,
+      body,
+      deleted: false
+    }, { merge:true });
+
+    currentId = id;
+    alert("✅ Guardado (compartido)");
+  };
+
+  window.deleteSong = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!currentId){ alert("No hay canción cargada."); return; }
+    if(!confirm("¿Eliminar esta canción?")) return;
+
+    await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
+
+    officialList = officialList.filter(x=>x.id!==currentId);
+    await saveOfficial();
+
+    myList = myList.filter(x=>x.id!==currentId);
+    saveMy();
+
+    if(importedList) importedList = importedList.filter(x=>x.id!==currentId);
+    if(favs.has(currentId)){ favs.delete(currentId); saveFavs(favs); }
+
+    window.clearForm();
+  };
+
+  window.loadSong = async function(id){
+    const snap = await getDoc(doc(db,"songs",id));
+    if(!snap.exists()) return;
+    const d = snap.data();
+    currentId = id;
+    titleEl.value = d.title || "";
+    keyEl.value   = d.key || "C";
+    modeEl.value  = d.mode || "major";
+    preferEl.value= d.prefer || "sharps";
+    bodyEl.value  = d.body || "";
+    updateTransposePreview();
+    window.showTab("library");
+  };
+
+  function renderLibraryList(){
+    const q = (searchLibEl.value||"").trim().toLowerCase();
+    const qn = normalizeTitle(q);
+    const favOnly = !!favOnlyEl.checked;
+
+    songListEl.innerHTML = "";
+    const arr = [];
+    for(const [id,d] of songsCache.entries()){
+      if(d.deleted) continue;
+      if(favOnly && !favs.has(id)) continue;
+
+      const title = d.title||"(Sin título)";
+      const tonal = (d.key||"") + (d.mode==="minor" ? "m" : "");
+      const body = d.body||"";
+
+      const hayMatch = !qn
+        || normalizeTitle(title).includes(qn)
+        || stripAccents(body.toLowerCase()).includes(stripAccents(q.toLowerCase()));
+
+      if(hayMatch){
+        arr.push({id, title, tonal, mode:d.mode});
+      }
+    }
+
+    arr.sort((a,b)=>{
+      const af = favs.has(a.id) ? 0 : 1;
+      const bf = favs.has(b.id) ? 0 : 1;
+      if(af!==bf) return af-bf;
+      return a.title.localeCompare(b.title,"es");
+    });
+
+    for(const it of arr){
+      const div=document.createElement("div");
+      div.className="list-item";
+      const isFav = favs.has(it.id);
+
+      div.innerHTML = `
+        <div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="star ${isFav ? "on":""}" title="Favorito" onclick="toggleFav('${it.id}')">${isFav ? "★" : "☆"}</button>
+            <div>
+              <div><b>${escapeHtml(it.title)}</b></div>
+              <div class="muted">Tono: ${escapeHtml(it.tonal)} (${modeLabel(it.mode)})</div>
+            </div>
+          </div>
+        </div>
+        <div class="mini">
+          <button onclick="loadSong('${it.id}')">Abrir</button>
+        </div>
+      `;
+      songListEl.appendChild(div);
+    }
+
+    if(arr.length===0){
+      const p = document.createElement("div");
+      p.className="muted";
+      p.style.marginTop="10px";
+      p.textContent = "No hay resultados.";
+      songListEl.appendChild(p);
+    }
+  }
+
+  searchLibEl.addEventListener("input", renderLibraryList);
+  favOnlyEl.addEventListener("change", renderLibraryList);
+
+  /* ================== Pickers ================== */
+  let allSongOptions = []; // [{id,title}]
+  function fillPickers(){
+    // build song list once
+    allSongOptions = [];
+    for(const [id,d] of songsCache.entries()){
+      if(d.deleted) continue;
+      allSongOptions.push({id, title:d.title||"(Sin título)"});
+    }
+    allSongOptions.sort((a,b)=>{
+      const af = favs.has(a.id) ? 0 : 1;
+      const bf = favs.has(b.id) ? 0 : 1;
+      if(af!==bf) return af-bf;
+      return a.title.localeCompare(b.title,"es");
+    });
+
+    // MY picker (no filter)
+    songPickerMyEl.innerHTML = "";
+    for(const o of allSongOptions){
+      const opt=document.createElement("option");
+      opt.value=o.id; opt.textContent = (favs.has(o.id) ? "★ " : "") + o.title;
+      songPickerMyEl.appendChild(opt);
+    }
+
+    // Official picker filtered by search
+    filterOfficialPicker();
+  }
+
+  function filterOfficialPicker(){
+    const q = normalizeTitle(officialSongSearchEl.value || "");
+    songPickerOfficialEl.innerHTML = "";
+    for(const o of allSongOptions){
+      if(q && !normalizeTitle(o.title).includes(q)) continue;
+      const opt=document.createElement("option");
+      opt.value=o.id; opt.textContent = (favs.has(o.id) ? "★ " : "") + o.title;
+      songPickerOfficialEl.appendChild(opt);
+    }
+  }
+
+  officialSongSearchEl.addEventListener("input", filterOfficialPicker);
+
+  /* ================== OFICIAL (Firestore) ================== */
+  const officialRef = doc(db,"shared","official");
+
+  function normalizeItems(items){
+    if(!Array.isArray(items)) return [];
+    if(items.length===0) return [];
+    if(typeof items[0] === "string"){
+      return items.map(id=>({id, toKey:null}));
+    }
+    return items
+      .filter(x=>x && typeof x.id === "string")
+      .map(x=>({ id:x.id, toKey: x.toKey ?? null }));
+  }
+
+  function normalizeOfficialMeta(meta){
+    const m = meta || {};
+    const base = {
+      serviceName: (m.serviceName||""),
+      serviceDate: (m.serviceDate||""),
+      leadId: (m.leadId||""),
+      choirIds: Array.isArray(m.choirIds) ? m.choirIds.filter(x=>typeof x==="string") : [],
+      instruments: {
+        Guitarra: (m?.instruments?.Guitarra||""),
+        Bajo: (m?.instruments?.Bajo||""),
+        Teclas: (m?.instruments?.Teclas||""),
+        "Batería": (m?.instruments?.["Batería"]||"")
+      },
+      extraInstruments: Array.isArray(m.extraInstruments)
+        ? m.extraInstruments
+            .filter(x=>x && typeof x.name==="string")
+            .map(x=>({name:x.name, memberId: (x.memberId||"")}))
+        : [],
+      comments: (m.comments||"")
+    };
+    // regla: voz principal no en coro
+    if(base.leadId){
+      base.choirIds = base.choirIds.filter(id=>id!==base.leadId);
+    }
+    // regla: músico no en 2 instrumentos (limpia duplicados)
+    const seen = new Set();
+    for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
+      const v = base.instruments[k];
+      if(v && seen.has(v)) base.instruments[k] = "";
+      if(v) seen.add(v);
+    }
+    // extras: no duplicar músico ya usado en fijos/extras
+    for(const ex of base.extraInstruments){
+      if(!ex.memberId) continue;
+      if(seen.has(ex.memberId)){ ex.memberId = ""; }
+      else seen.add(ex.memberId);
+    }
+    return base;
+  }
+
+  async function saveOfficial(){
+    await setDoc(officialRef, { items: officialList }, { merge:true });
+  }
+
+  function syncOfficialInputsFromMeta(){
+    officialServiceNameEl.value = officialMeta.serviceName || "";
+    officialServiceDateEl.value = officialMeta.serviceDate || "";
+    officialCommentsEl.value = officialMeta.comments || "";
+  }
+
+  window.saveOfficialMeta = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+
+    // leer campos
+    officialMeta.serviceName = (officialServiceNameEl.value||"").trim();
+    officialMeta.serviceDate = (officialServiceDateEl.value||"").trim();
+    officialMeta.comments    = (officialCommentsEl.value||"").trim();
+
+    // lead + choir ya vienen de UI state (checkboxes / select)
+    // instruments already in officialMeta from change handlers
+    officialMeta = normalizeOfficialMeta(officialMeta);
+
+    await setDoc(officialRef, { meta: officialMeta }, { merge:true });
+    alert("✅ Datos guardados");
+    renderOfficial(); // re-aplica reglas (lead no coro, etc.)
+  };
+
+  window.addToOfficial = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const id = songPickerOfficialEl.value;
+    if(!id){ alert("Elegí una canción."); return; }
+    if(officialList.some(x=>x.id===id)){ alert("Ya está en la lista oficial."); return; }
+    const s = getSong(id);
+    const defaultTo = s?.key || "C";
+    officialList = [...officialList, {id, toKey: defaultTo}];
+    await saveOfficial();
+  };
+
+  window.clearOfficial = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!confirm("¿Vaciar la lista oficial?")) return;
+    officialList = [];
+    await saveOfficial();
+  };
+
+  window.officialSetToKey = async function(id, toKey){
+    const entry = officialList.find(x=>x.id===id);
+    if(!entry) return;
+    entry.toKey = toKey;
+    officialList = officialList.map(x=> x.id===id ? entry : x);
+    if(unlocked) await saveOfficial();
+    renderOfficial();
+  };
+
+  window.removeFromOfficial = async function(id){
+    if(!unlocked) return;
+    officialList = officialList.filter(x=>x.id!==id);
+    await saveOfficial();
+  };
+
+  async function reorderOfficial(draggedId, targetId){
+    if(!unlocked) return;
+    const from = officialList.findIndex(x=>x.id===draggedId);
+    const to   = officialList.findIndex(x=>x.id===targetId);
+    if(from<0 || to<0 || from===to) return;
+
+    const arr = officialList.slice();
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    officialList = arr;
+
+    await saveOfficial();
+    renderOfficial();
+  }
+
+  function attachOfficialDrag(row){
+    if(!unlocked) return;
+
+    row.addEventListener("dragstart", (e)=>{
+      dragOfficialId = row.dataset.id;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragOfficialId);
+    });
+    row.addEventListener("dragend", ()=>{
+      dragOfficialId = null;
+      row.classList.remove("dragging");
+      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
+    });
+    row.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      row.classList.add("drop-target");
+      e.dataTransfer.dropEffect = "move";
+    });
+    row.addEventListener("dragleave", ()=>row.classList.remove("drop-target"));
+    row.addEventListener("drop", async (e)=>{
+      e.preventDefault();
+      row.classList.remove("drop-target");
+      const dragged = e.dataTransfer.getData("text/plain") || dragOfficialId;
+      const target = row.dataset.id;
+      await reorderOfficial(dragged, target);
+    });
+  }
+
+  /* ====== OFICIAL: Integrantes (selectors con filtros + reglas) ====== */
+
+  function memberDisplayName(m){
+    return (m?.name || "(Sin nombre)");
+  }
+
+  function memberCanBeLead(m){
+    if(!m) return false;
+    if(m.type === "cantante") return !!m.canLead;
+    if(m.type === "musico") return !!m.alsoSings && !!m.canLead;
+    return false;
+  }
+  function memberCanBeChoir(m){
+    if(!m) return false;
+    if(m.type === "cantante") return !!m.canChoir;
+    if(m.type === "musico") return !!m.alsoSings && !!m.canChoir;
+    return false;
+  }
+  function memberPlaysInstrument(m, instrumentName){
+    if(!m) return false;
+    if(m.type !== "musico") return false;
+    const insts = Array.isArray(m.instruments) ? m.instruments : [];
+    return insts.includes(instrumentName);
+  }
+
+  function getUsedMusicians(exceptSlot){
+    // músicos usados en instrumentos (para evitar que aparezca en 2 slots)
+    // exceptSlot: {type:"fixed", name:"Guitarra"} OR {type:"extra", idx:0}
+    const used = new Set();
+
+    const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
+    for(const nm of fixedNames){
+      const id = officialMeta?.instruments?.[nm] || "";
+      if(!id) continue;
+      if(exceptSlot?.type==="fixed" && exceptSlot?.name===nm) continue;
+      used.add(id);
+    }
+    const extras = Array.isArray(officialMeta.extraInstruments) ? officialMeta.extraInstruments : [];
+    extras.forEach((ex, idx)=>{
+      const id = ex?.memberId || "";
+      if(!id) return;
+      if(exceptSlot?.type==="extra" && exceptSlot?.idx===idx) return;
+      used.add(id);
+    });
+    return used;
+  }
+
+  function rebuildLeadSelect(){
+    officialLeadSelectEl.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "(Sin seleccionar)";
+    officialLeadSelectEl.appendChild(opt0);
+
+    const all = [];
+    for(const [id,m] of membersCache.entries()){
+      if(memberCanBeLead(m)) all.push({id, name: memberDisplayName(m)});
+    }
+    all.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+
+    for(const it of all){
+      const opt = document.createElement("option");
+      opt.value = it.id;
+      opt.textContent = it.name;
+      officialLeadSelectEl.appendChild(opt);
+    }
+
+    // set current
+    officialLeadSelectEl.value = officialMeta.leadId || "";
+  }
+
+  function rebuildChoirMulti(){
+    officialChoirMultiEl.innerHTML = "";
+
+    const leadId = officialMeta.leadId || "";
+    if(leadId){
+      // regla: lead no en coro
+      officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==leadId);
+    }
+
+    const all = [];
+    for(const [id,m] of membersCache.entries()){
+      if(memberCanBeChoir(m)) all.push({id, name: memberDisplayName(m)});
+    }
+    all.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+
+    if(all.length===0){
+      officialChoirMultiEl.innerHTML = `<div class="muted">No hay integrantes configurados como “Coro”.</div>`;
+      return;
+    }
+
+    for(const it of all){
+      const checked = (officialMeta.choirIds||[]).includes(it.id);
+      const disabled = (it.id===leadId);
+      const row = document.createElement("label");
+      row.className = "mini";
+      row.style.margin = "0";
+      row.style.display = "flex";
+      row.style.justifyContent = "space-between";
+      row.style.alignItems = "center";
+      row.style.gap = "10px";
+      row.innerHTML = `
+        <span>${escapeHtml(it.name)} ${disabled ? '<span class="pill">Voz principal</span>' : ""}</span>
+        <input type="checkbox" ${checked ? "checked":""} ${disabled ? "disabled":""} data-id="${it.id}">
+      `;
+      officialChoirMultiEl.appendChild(row);
+    }
+
+    officialChoirMultiEl.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+      cb.addEventListener("change", ()=>{
+        const id = cb.getAttribute("data-id");
+        const set = new Set(officialMeta.choirIds || []);
+        if(cb.checked) set.add(id); else set.delete(id);
+
+        // regla: no incluir voz principal
+        if(officialMeta.leadId) set.delete(officialMeta.leadId);
+
+        officialMeta.choirIds = [...set];
+      });
+    });
+  }
+
+  function buildInstrumentSelect(selectEl, instrumentName, selectedId, exceptSlot){
+    selectEl.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "(Sin seleccionar)";
+    selectEl.appendChild(opt0);
+
+    const used = getUsedMusicians(exceptSlot);
+
+    const list = [];
+    for(const [id,m] of membersCache.entries()){
+      if(!memberPlaysInstrument(m, instrumentName)) continue;
+
+      // si ya está usado en otro instrumento, no mostrar (a menos que sea el actual)
+      if(used.has(id) && id !== selectedId) continue;
+
+      list.push({id, name: memberDisplayName(m)});
+    }
+    list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+
+    for(const it of list){
+      const opt = document.createElement("option");
+      opt.value = it.id;
+      opt.textContent = it.name;
+      selectEl.appendChild(opt);
+    }
+
+    selectEl.value = selectedId || "";
+  }
+
+  function rebuildFixedInstrumentSelects(){
+    // Guitarra
+    buildInstrumentSelect(
+      instGuitarraEl,
+      "Guitarra",
+      officialMeta?.instruments?.Guitarra || "",
+      {type:"fixed", name:"Guitarra"}
+    );
+    // Bajo
+    buildInstrumentSelect(
+      instBajoEl,
+      "Bajo",
+      officialMeta?.instruments?.Bajo || "",
+      {type:"fixed", name:"Bajo"}
+    );
+    // Teclas
+    buildInstrumentSelect(
+      instTeclasEl,
+      "Teclas",
+      officialMeta?.instruments?.Teclas || "",
+      {type:"fixed", name:"Teclas"}
+    );
+    // Batería
+    buildInstrumentSelect(
+      instBateriaEl,
+      "Batería",
+      officialMeta?.instruments?.["Batería"] || "",
+      {type:"fixed", name:"Batería"}
+    );
+
+    instGuitarraEl.onchange = () => { officialMeta.instruments.Guitarra = instGuitarraEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
+    instBajoEl.onchange     = () => { officialMeta.instruments.Bajo     = instBajoEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
+    instTeclasEl.onchange   = () => { officialMeta.instruments.Teclas   = instTeclasEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
+    instBateriaEl.onchange  = () => { officialMeta.instruments["Batería"]= instBateriaEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
+  }
+
+  function renderExtraInstruments(){
+    extraInstListEl.innerHTML = "";
+    const extras = Array.isArray(officialMeta.extraInstruments) ? officialMeta.extraInstruments : [];
+    if(extras.length===0){
+      extraInstListEl.innerHTML = `<div class="muted">No hay instrumentos extra.</div>`;
+      return;
+    }
+
+    extras.forEach((ex, idx)=>{
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.style.alignItems = "flex-end";
+
+      const name = (ex.name||"").trim() || "Instrumento";
+      const selectedId = ex.memberId || "";
+
+      row.innerHTML = `
+        <div style="flex:1">
+          <div><b>${escapeHtml(name)}</b></div>
+          <div class="muted">Elegí el músico para este instrumento</div>
+        </div>
+        <div class="mini">
+          <select style="min-width:220px"></select>
+          <button ${unlocked ? "" : "disabled"} onclick="removeExtraInstrument(${idx})">Quitar</button>
+        </div>
+      `;
+
+      extraInstListEl.appendChild(row);
+
+      const sel = row.querySelector("select");
+      sel.disabled = !unlocked;
+
+      // opciones: músicos que tengan este instrumento extra marcado en su perfil
+      sel.innerHTML = "";
+      const opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "(Sin seleccionar)";
+      sel.appendChild(opt0);
+
+      const used = getUsedMusicians({type:"extra", idx});
+      const list = [];
+      for(const [id,m] of membersCache.entries()){
+        if(!memberPlaysInstrument(m, name)) continue;
+        if(used.has(id) && id !== selectedId) continue;
+        list.push({id, name: memberDisplayName(m)});
+      }
+      list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+      for(const it of list){
+        const opt = document.createElement("option");
+        opt.value = it.id;
+        opt.textContent = it.name;
+        sel.appendChild(opt);
+      }
+      sel.value = selectedId;
+
+      sel.addEventListener("change", ()=>{
+        if(!Array.isArray(officialMeta.extraInstruments)) officialMeta.extraInstruments = [];
+        officialMeta.extraInstruments[idx].memberId = sel.value || "";
+        // refrescar para aplicar regla músico no 2 instrumentos
+        rebuildFixedInstrumentSelects();
+        renderExtraInstruments();
+      });
+    });
+  }
+
+  window.addExtraInstrument = function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const name = (extraInstNameEl.value||"").trim();
+    if(!name){ alert("Escribí el nombre del instrumento."); return; }
+    if(!Array.isArray(officialMeta.extraInstruments)) officialMeta.extraInstruments = [];
+    officialMeta.extraInstruments.push({name, memberId:""});
+    extraInstNameEl.value = "";
+    renderExtraInstruments();
+  };
+
+  window.removeExtraInstrument = function(idx){
+    if(!unlocked) return;
+    if(!Array.isArray(officialMeta.extraInstruments)) return;
+    officialMeta.extraInstruments.splice(idx,1);
+    rebuildFixedInstrumentSelects();
+    renderExtraInstruments();
+  };
+
+  officialLeadSelectEl.addEventListener("change", ()=>{
+    officialMeta.leadId = officialLeadSelectEl.value || "";
+    // regla: lead no en coro
+    if(officialMeta.leadId){
+      officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==officialMeta.leadId);
+    }
+    rebuildChoirMulti();
+  });
+
+  /* ======= render OFICIAL (lista + pantalla + impresión) ======= */
+  function renderOfficial(){
+    officialOrderEl.innerHTML = "";
+    officialSongsEl.innerHTML = "";
+    officialPrintBlocks.innerHTML = "";
+
+    const visible = officialList.filter(x=>getSong(x.id));
+    officialEmptyEl.style.display = (visible.length===0) ? "block" : "none";
+
+    // inputs base
+    syncOfficialInputsFromMeta();
+
+    // rebuild selectors (members)
+    rebuildLeadSelect();
+    rebuildChoirMulti();
+    rebuildFixedInstrumentSelects();
+    renderExtraInstruments();
+
+    // ---- PRINT HEADER (incluye info equipo arriba) ----
+    const leadName = officialMeta.leadId ? memberDisplayName(getMember(officialMeta.leadId)) : "";
+    const choirNames = (officialMeta.choirIds||[])
+      .map(id=>memberDisplayName(getMember(id)))
+      .filter(Boolean);
+
+    const instLines = [];
+    const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
+    for(const nm of fixedNames){
+      const mid = officialMeta?.instruments?.[nm] || "";
+      if(mid){
+        instLines.push(`${nm}: ${memberDisplayName(getMember(mid))}`);
+      }
+    }
+    const extras = Array.isArray(officialMeta.extraInstruments) ? officialMeta.extraInstruments : [];
+    for(const ex of extras){
+      if(ex?.name && ex?.memberId){
+        instLines.push(`${ex.name}: ${memberDisplayName(getMember(ex.memberId))}`);
+      }
+    }
+
+    const header = document.createElement("div");
+    header.className = "print-block";
+    header.innerHTML = `
+      <div class="print-title">Lista de Alabanzas Oficial</div>
+      <div class="print-meta">
+        ${escapeHtml(officialMeta.serviceName || "")}${officialMeta.serviceDate ? " • Fecha: "+escapeHtml(fmtDateISO(officialMeta.serviceDate)) : ""}
+      </div>
+
+      <div class="print-box">
+        <div><b>Voz principal:</b> ${escapeHtml(leadName || "(Sin asignar)")}</div>
+        <div style="margin-top:6px"><b>Coro:</b> ${escapeHtml(choirNames.length ? choirNames.join(", ") : "(Sin asignar)")}</div>
+        <div style="margin-top:6px"><b>Instrumentos:</b><br>
+          <pre class="lyrics" style="border:1px solid #000;border-radius:0;margin-top:6px">${escapeHtml(instLines.length ? instLines.join("\n") : "(Sin asignar)")}</pre>
+        </div>
+        ${officialMeta.comments ? `
+          <div style="margin-top:6px"><b>Comentarios:</b><br>
+            <pre class="lyrics" style="border:1px solid #000;border-radius:0;margin-top:6px">${escapeHtml(officialMeta.comments)}</pre>
+          </div>` : `
+          <div style="margin-top:6px"><b>Comentarios:</b> (Sin comentarios)</div>
+        `}
+      </div>
+      <hr />
+    `;
+    officialPrintBlocks.appendChild(header);
+
+    // ---- pantalla + print de canciones ----
+    visible.forEach((entry, idx)=>{
+      const s = getSong(entry.id);
+      const isMin = (s.mode==="minor");
+      const originalKey = s.key || "C";
+      const toKeyRaw = entry.toKey || originalKey;
+
+      const originalKeyLabel = originalKey + (isMin ? "m" : "");
+      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
+      const prefer = s.prefer || "sharps";
+
+      const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
+      const chordsOnly = extractChordsOnly(transposed);
+
+      // Order row (pantalla)
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.dataset.id = entry.id;
+      row.draggable = !!unlocked;
+
+      row.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="drag-handle" title="${unlocked ? "Arrastrar para ordenar" : "Activa modo edición para arrastrar"}">⠿</span>
+          <div>
+            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
+            <div class="muted">
+              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+            </div>
+          </div>
+        </div>
+        <div class="mini">
+          <label class="muted" style="margin:0">Tocar en:</label>
+          <select ${unlocked ? "" : "disabled"} style="min-width:170px"></select>
+          <button onclick="removeFromOfficial('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
+        </div>
+      `;
+      officialOrderEl.appendChild(row);
+      attachOfficialDrag(row);
+
+      const sel = row.querySelector("select");
+      buildToKeySelect(sel, originalKey);
+      sel.value = toKeyRaw;
+      sel.addEventListener("change", ()=> window.officialSetToKey(entry.id, sel.value));
+
+      // Vista pantalla (ACORDES + CANCIÓN)
+      const box = document.createElement("div");
+      box.className = "songbox";
+      box.innerHTML = `
+        <h4>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</h4>
+        <div class="songmeta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: <b>${escapeHtml(toKeyLabel)}</b> (${modeLabel(s.mode)})
+        </div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="chordsOnly">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+      `;
+      officialSongsEl.appendChild(box);
+
+      // Bloque impresión canción
+      const block = document.createElement("div");
+      block.className = "print-block";
+      block.innerHTML = `
+        <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
+        <div class="print-meta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: ${escapeHtml(toKeyLabel)} (${modeLabel(s.mode)})
+        </div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="print-chords">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+        <hr />
+      `;
+      officialPrintBlocks.appendChild(block);
+    });
+  }
+
+  /* ================== MI LISTA (personal) ================== */
+  function loadMy(){
+    try{
+      const raw = localStorage.getItem(LS_MY_LIST);
+      const arr = raw ? JSON.parse(raw) : [];
+      if(!Array.isArray(arr)) return [];
+      return arr.filter(x=>x && typeof x.id==="string").map(x=>({id:x.id, toKey: x.toKey ?? null}));
+    }catch(e){ return []; }
+  }
+  function saveMy(){
+    try{ localStorage.setItem(LS_MY_LIST, JSON.stringify(myList)); }catch(e){}
+    renderMy();
+  }
+  myList = loadMy();
+
+  function loadMyMeta(){
+    try{
+      const raw = localStorage.getItem(LS_MY_META);
+      const obj = raw ? JSON.parse(raw) : {};
+      return { serviceName:(obj?.serviceName||""), serviceDate:(obj?.serviceDate||"") };
+    }catch(e){ return {serviceName:"",serviceDate:""}; }
+  }
+  function saveMyMeta(){
+    const obj = { serviceName:(myServiceNameEl.value||"").trim(), serviceDate:(myServiceDateEl.value||"").trim() };
+    try{ localStorage.setItem(LS_MY_META, JSON.stringify(obj)); }catch(e){}
+  }
+  const myMetaInit = loadMyMeta();
+  myServiceNameEl.value = myMetaInit.serviceName || "";
+  myServiceDateEl.value = myMetaInit.serviceDate || "";
+  myServiceNameEl.addEventListener("input", ()=>{ saveMyMeta(); renderMy(); });
+  myServiceDateEl.addEventListener("change", ()=>{ saveMyMeta(); renderMy(); });
+
+  function getMyViewList(){
+    return (showImported && Array.isArray(importedList)) ? importedList : myList;
+  }
+  function setImportBannerVisible(v){
+    if(v) importBannerEl.classList.remove("hidden");
+    else importBannerEl.classList.add("hidden");
+  }
+  window.dismissImportedView = function(){
+    showImported = false;
+    importedList = null;
+    setImportBannerVisible(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("mylist");
+    window.history.replaceState({}, "", url.toString());
+    renderMy();
+  };
+  window.saveImportedToMy = function(mode){
+    if(!Array.isArray(importedList)) return;
+    if(mode==="replace"){
+      myList = importedList.map(x=>({id:x.id, toKey:x.toKey ?? null}));
+    } else {
+      const existing = new Set(myList.map(x=>x.id));
+      const merged = myList.slice();
+      for(const it of importedList){
+        if(!existing.has(it.id)){
+          merged.push({id:it.id, toKey: it.toKey ?? null});
+          existing.add(it.id);
+        }
+      }
+      myList = merged;
+    }
+    saveMy();
+    alert("✅ Guardado en Mi Lista");
+  };
+
+  window.addToMy = function(){
+    if(showImported){ alert("Estás viendo una lista por link. Cerrá esa vista para editar tu lista."); return; }
+    const id = songPickerMyEl.value;
+    if(!id){ alert("Elegí una canción."); return; }
+    if(myList.some(x=>x.id===id)){ alert("Ya está en tu lista."); return; }
+    const s = getSong(id);
+    const defaultTo = s?.key || "C";
+    myList = [...myList, {id, toKey: defaultTo}];
+    saveMy();
+  };
+  window.clearMy = function(){
+    if(showImported){ alert("Estás viendo una lista por link. Cerrá esa vista para editar tu lista."); return; }
+    if(!confirm("¿Vaciar tu lista personal?")) return;
+    myList = [];
+    saveMy();
+  };
+  window.mySetToKey = function(id, toKey){
+    const list = getMyViewList();
+    const entry = list.find(x=>x.id===id);
+    if(!entry) return;
+    entry.toKey = toKey;
+    if(showImported){
+      importedList = list.map(x=>({id:x.id, toKey:x.toKey ?? null}));
+      renderMy();
+      return;
+    }
+    myList = list.map(x=> x.id===id ? entry : x);
+    saveMy();
+  };
+  window.myRemove = function(id){
+    if(showImported){
+      importedList = (importedList||[]).filter(x=>x.id!==id);
+      renderMy();
+      return;
+    }
+    myList = myList.filter(x=>x.id!==id);
+    saveMy();
+  };
+
+  function myReorder(draggedId, targetId){
+    const list = getMyViewList();
+    const from = list.findIndex(x=>x.id===draggedId);
+    const to   = list.findIndex(x=>x.id===targetId);
+    if(from<0 || to<0 || from===to) return;
+
+    const arr = list.slice();
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+
+    if(showImported){
+      importedList = arr.map(x=>({id:x.id, toKey:x.toKey ?? null}));
+      renderMy();
+      return;
+    }
+    myList = arr;
+    saveMy();
+  }
+
+  function attachMyDrag(row){
+    row.addEventListener("dragstart", (e)=>{
+      dragMyId = row.dataset.id;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragMyId);
+    });
+    row.addEventListener("dragend", ()=>{
+      dragMyId = null;
+      row.classList.remove("dragging");
+      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
+    });
+    row.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      row.classList.add("drop-target");
+      e.dataTransfer.dropEffect = "move";
+    });
+    row.addEventListener("dragleave", ()=>row.classList.remove("drop-target"));
+    row.addEventListener("drop", (e)=>{
+      e.preventDefault();
+      row.classList.remove("drop-target");
+      const dragged = e.dataTransfer.getData("text/plain") || dragMyId;
+      const target = row.dataset.id;
+      myReorder(dragged, target);
+    });
+  }
+
+  function getMyMeta(){
+    const meta = loadMyMeta();
+    return { serviceName:(meta.serviceName||"").trim(), serviceDate:(meta.serviceDate||"").trim() };
+  }
+
+  function renderMy(){
+    myOrderEl.innerHTML = "";
+    mySongsEl.innerHTML = "";
+    myPrintBlocks.innerHTML = "";
+
+    const list = getMyViewList();
+    const visible = list.filter(x=>getSong(x.id));
+    myEmptyEl.style.display = (visible.length===0) ? "block" : "none";
+    setImportBannerVisible(showImported);
+
+    const meta = getMyMeta();
+    const headerHtml = `
+      <div class="print-block">
+        <div class="print-title">Mi Lista de Alabanzas</div>
+        <div class="print-meta">
+          ${escapeHtml(meta.serviceName || "")}${meta.serviceDate ? " • Fecha: "+escapeHtml(fmtDateISO(meta.serviceDate)) : ""}
+        </div>
+        <hr />
+      </div>
+    `;
+    myPrintBlocks.insertAdjacentHTML("beforeend", headerHtml);
+
+    visible.forEach((entry, idx)=>{
+      const s = getSong(entry.id);
+      const isMin = (s.mode==="minor");
+      const originalKey = s.key || "C";
+      const toKeyRaw = entry.toKey || originalKey;
+
+      const originalKeyLabel = originalKey + (isMin ? "m" : "");
+      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
+      const prefer = s.prefer || "sharps";
+
+      const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
+      const chordsOnly = extractChordsOnly(transposed);
+
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.dataset.id = entry.id;
+      row.draggable = true;
+
+      row.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="drag-handle" title="Arrastrar para ordenar">⠿</span>
+          <div>
+            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
+            <div class="muted">
+              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+            </div>
+          </div>
+        </div>
+        <div class="mini">
+          <label class="muted" style="margin:0">Tocar en:</label>
+          <select style="min-width:170px"></select>
+          <button onclick="myRemove('${entry.id}')">Quitar</button>
+        </div>
+      `;
+      myOrderEl.appendChild(row);
+      attachMyDrag(row);
+
+      const sel = row.querySelector("select");
+      buildToKeySelect(sel, originalKey);
+      sel.value = toKeyRaw;
+      sel.addEventListener("change", ()=> window.mySetToKey(entry.id, sel.value));
+
+      const box = document.createElement("div");
+      box.className = "songbox";
+      box.innerHTML = `
+        <h4>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</h4>
+        <div class="songmeta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: <b>${escapeHtml(toKeyLabel)}</b> (${modeLabel(s.mode)})
+        </div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="chordsOnly">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+      `;
+      mySongsEl.appendChild(box);
+
+      const block = document.createElement("div");
+      block.className = "print-block";
+      block.innerHTML = `
+        <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
+        <div class="print-meta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: ${escapeHtml(toKeyLabel)} (${modeLabel(s.mode)})
+        </div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="print-chords">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+        <hr />
+      `;
+      myPrintBlocks.appendChild(block);
+    });
+  }
+
+  /* ================== Compartir Mi Lista (link) ================== */
+  function base64UrlEncode(str){
+    const b64 = btoa(unescape(encodeURIComponent(str)));
+    return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
+  }
+  function base64UrlDecode(str){
+    str = str.replace(/-/g,"+").replace(/_/g,"/");
+    while(str.length % 4) str += "=";
+    const txt = decodeURIComponent(escape(atob(str)));
+    return txt;
+  }
+  function normalizeForShare(arr){
+    if(!Array.isArray(arr)) return [];
+    return arr.filter(x=>x && typeof x.id==="string").map(x=>({id:x.id, toKey:x.toKey ?? null}));
+  }
+  window.shareMy = async function(){
+    const list = normalizeForShare(getMyViewList());
+    if(list.length===0){ alert("Tu lista está vacía."); return; }
+
+    const meta = getMyMeta();
+    const payload = base64UrlEncode(JSON.stringify({ v:1, items:list, meta }));
+    const url = new URL(window.location.href);
+    url.searchParams.set("mylist", payload);
+    const link = url.toString();
+
+    shareOutEl.innerHTML = `
+      <div><b>Link:</b></div>
+      <div style="word-break:break-all">${escapeHtml(link)}</div>
+      <div class="muted">Compartí este link por WhatsApp. El que lo abre verá la lista y podrá guardarla.</div>
+    `;
+
+    try{
+      await navigator.clipboard.writeText(link);
+      alert("✅ Link copiado al portapapeles");
+    }catch(e){
+      prompt("Copiá este link:", link);
+    }
+  };
+
+  function tryLoadImportedFromUrl(){
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get("mylist");
+    if(!token) return;
+
+    try{
+      const raw = base64UrlDecode(token);
+      const obj = JSON.parse(raw);
+      const items = normalizeForShare(obj?.items);
+      const meta = obj?.meta || {};
+      if(items.length===0) return;
+
+      importedList = items.map(x=>({id:x.id, toKey:x.toKey ?? null}));
+      showImported = true;
+
+      importBannerTextEl.textContent = "Estás viendo una lista compartida por link. Podés guardarla en tu “Mi Lista”.";
+      if(typeof meta.serviceName === "string") myServiceNameEl.value = meta.serviceName;
+      if(typeof meta.serviceDate === "string") myServiceDateEl.value = meta.serviceDate;
+
+      setImportBannerVisible(true);
+    }catch(e){
+      console.warn("No pude leer lista del link:", e);
+    }
+  }
+
+  /* ================== Impresión ================== */
+  function setPrintTarget(target){
+    officialPrintArea.classList.remove("print-target");
+    myPrintArea.classList.remove("print-target");
+    if(target==="official") officialPrintArea.classList.add("print-target");
+    if(target==="my") myPrintArea.classList.add("print-target");
+  }
+  window.printOfficial = function(){ setPrintTarget("official"); window.print(); };
+  window.printMy = function(){ setPrintTarget("my"); window.print(); };
+
+  /* ================== INTEGRANTES (Firestore) ================== */
+  const membersCol = collection(db,"members");
+
+  function setMemberFormMode(type){
+    if(type==="cantante"){
+      cantanteBoxEl.classList.remove("hidden");
+      musicoBoxEl.classList.add("hidden");
+    } else {
+      cantanteBoxEl.classList.add("hidden");
+      musicoBoxEl.classList.remove("hidden");
+    }
+  }
+
+  memTypeEl.addEventListener("change", ()=>{
+    setMemberFormMode(memTypeEl.value);
+  });
+
+  memAlsoSingsEl.addEventListener("change", ()=>{
+    if(memAlsoSingsEl.checked) musicoSingsBoxEl.classList.remove("hidden");
+    else musicoSingsBoxEl.classList.add("hidden");
+  });
+
+  window.addMemberExtraInst = function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const nm = (memExtraInstEl.value||"").trim();
+    if(!nm) return;
+    if(memberExtraInstruments.includes(nm)){ memExtraInstEl.value=""; return; }
+    memberExtraInstruments.push(nm);
+    memExtraInstEl.value = "";
+    renderMemberExtraInstList();
+  };
+
+  function renderMemberExtraInstList(){
+    if(memberExtraInstruments.length===0){
+      memExtraInstListEl.innerHTML = "<i>(sin extras)</i>";
+      return;
+    }
+    memExtraInstListEl.innerHTML = memberExtraInstruments.map((nm, idx)=>
+      `<span class="pill">${escapeHtml(nm)} <button style="border:none;background:transparent;cursor:pointer" ${unlocked ? "" : "disabled"} onclick="removeMemberExtraInst(${idx})">✕</button></span>`
+    ).join(" ");
+  }
+
+  window.removeMemberExtraInst = function(idx){
+    if(!unlocked) return;
+    memberExtraInstruments.splice(idx,1);
+    renderMemberExtraInstList();
+  };
+
+  window.clearMemberForm = function(){
+    editingMemberId = null;
+    memNameEl.value = "";
+    memTypeEl.value = "cantante";
+    memLeadEl.checked = false;
+    memChoirEl.checked = false;
+
+    memAlsoSingsEl.checked = false;
+    musicoSingsBoxEl.classList.add("hidden");
+    memLead2El.checked = false;
+    memChoir2El.checked = false;
+
+    document.querySelectorAll(".memInst").forEach(cb=>cb.checked=false);
+    memberExtraInstruments = [];
+    renderMemberExtraInstList();
+
+    setMemberFormMode("cantante");
+  };
+
+  function memberFromForm(){
+    const name = (memNameEl.value||"").trim();
+    const type = memTypeEl.value;
+    if(!name) return { ok:false, reason:"Poné el nombre." };
+
+    const base = { name, type };
+
+    if(type==="cantante"){
+      base.canLead = !!memLeadEl.checked;
+      base.canChoir = !!memChoirEl.checked;
+      base.alsoSings = false;
+      base.instruments = [];
+    } else {
+      base.alsoSings = !!memAlsoSingsEl.checked;
+      base.canLead = base.alsoSings ? !!memLead2El.checked : false;
+      base.canChoir = base.alsoSings ? !!memChoir2El.checked : false;
+
+      const inst = [];
+      document.querySelectorAll(".memInst").forEach(cb=>{
+        if(cb.checked) inst.push(cb.value);
+      });
+      // extras
+      for(const x of memberExtraInstruments){
+        if(x && !inst.includes(x)) inst.push(x);
+      }
+      base.instruments = inst;
+    }
+    return { ok:true, data: base };
+  }
+
+  window.saveMember = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    const res = memberFromForm();
+    if(!res.ok){ alert(res.reason); return; }
+
+    const id = editingMemberId || (crypto.randomUUID ? crypto.randomUUID() : ("m_"+Date.now()+Math.random().toString(16).slice(2)));
+    await setDoc(doc(db,"members",id), res.data, { merge:true });
+
+    editingMemberId = id;
+    alert("✅ Integrante guardado");
+  };
+
+  window.deleteMember = async function(){
+    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
+    if(!editingMemberId){ alert("No hay integrante cargado."); return; }
+    if(!confirm("¿Eliminar este integrante?")) return;
+
+    // borrar doc (simple)
+    await deleteDoc(doc(db,"members",editingMemberId));
+
+    // limpiar meta oficial si usaba a esa persona
+    const id = editingMemberId;
+    if(officialMeta.leadId===id) officialMeta.leadId="";
+    officialMeta.choirIds = (officialMeta.choirIds||[]).filter(x=>x!==id);
+
+    for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
+      if(officialMeta?.instruments?.[k]===id) officialMeta.instruments[k]="";
+    }
+    if(Array.isArray(officialMeta.extraInstruments)){
+      officialMeta.extraInstruments.forEach(ex=>{ if(ex.memberId===id) ex.memberId=""; });
+    }
+    // guardar meta para que todos queden limpios (solo si unlocked)
+    await setDoc(officialRef, { meta: officialMeta }, { merge:true });
+
+    window.clearMemberForm();
+  };
+
+  window.loadMember = function(id){
+    const m = getMember(id);
+    if(!m) return;
+    editingMemberId = id;
+
+    memNameEl.value = m.name || "";
+    memTypeEl.value = m.type || "cantante";
+
+    if(m.type==="cantante"){
+      memLeadEl.checked = !!m.canLead;
+      memChoirEl.checked = !!m.canChoir;
+      setMemberFormMode("cantante");
+    } else {
+      setMemberFormMode("musico");
+      memAlsoSingsEl.checked = !!m.alsoSings;
+      if(memAlsoSingsEl.checked) musicoSingsBoxEl.classList.remove("hidden");
+      else musicoSingsBoxEl.classList.add("hidden");
+
+      memLead2El.checked = !!m.canLead;
+      memChoir2El.checked = !!m.canChoir;
+
+      const insts = Array.isArray(m.instruments) ? m.instruments : [];
+      document.querySelectorAll(".memInst").forEach(cb=>{
+        cb.checked = insts.includes(cb.value);
+      });
+
+      // extras: todo lo que no es base
+      const base = new Set(["Guitarra","Bajo","Teclas","Batería"]);
+      memberExtraInstruments = insts.filter(x=>!base.has(x));
+      renderMemberExtraInstList();
+    }
+
+    window.showTab("members");
+  };
+
+  function renderMembers(){
+    // toggle fields enabled based on unlocked already in setUnlocked
+
+    const q = normalizeTitle(memSearchEl.value||"");
+    const arr = [];
+    for(const [id,m] of membersCache.entries()){
+      const name = m?.name || "(Sin nombre)";
+      if(q && !normalizeTitle(name).includes(q)) continue;
+      arr.push({id, name, m});
+    }
+    arr.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+
+    membersListEl.innerHTML = "";
+    for(const it of arr){
+      const m = it.m;
+      const tags = [];
+      if(m.type==="cantante"){
+        if(m.canLead) tags.push("Voz principal");
+        if(m.canChoir) tags.push("Coro");
+      } else {
+        tags.push("Músico");
+        if(m.alsoSings){
+          if(m.canLead) tags.push("Voz principal");
+          if(m.canChoir) tags.push("Coro");
+        }
+        const inst = Array.isArray(m.instruments)? m.instruments : [];
+        if(inst.length) tags.push("Inst: "+inst.join(", "));
+      }
+
+      const div = document.createElement("div");
+      div.className = "list-item";
+      div.innerHTML = `
+        <div>
+          <div><b>${escapeHtml(it.name)}</b></div>
+          <div class="muted">${escapeHtml(tags.join(" • "))}</div>
+        </div>
+        <div class="mini">
+          <button onclick="loadMember('${it.id}')">Abrir</button>
+        </div>
+      `;
+      membersListEl.appendChild(div);
+    }
+
+    if(arr.length===0){
+      membersListEl.innerHTML = `<div class="muted">No hay integrantes.</div>`;
+    }
+
+    // quick view
+    const lead = [];
+    const choir = [];
+    const inst = {Guitarra:[], Bajo:[], Teclas:[], "Batería":[]};
+    for(const [id,m] of membersCache.entries()){
+      if(memberCanBeLead(m)) lead.push(memberDisplayName(m));
+      if(memberCanBeChoir(m)) choir.push(memberDisplayName(m));
+      for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
+        if(memberPlaysInstrument(m,k)) inst[k].push(memberDisplayName(m));
+      }
+    }
+    lead.sort((a,b)=>a.localeCompare(b,"es"));
+    choir.sort((a,b)=>a.localeCompare(b,"es"));
+    for(const k of Object.keys(inst)) inst[k].sort((a,b)=>a.localeCompare(b,"es"));
+
+    membersQuickEl.innerHTML = `
+      <div class="songbox" style="background:#fff">
+        <div><b>Voz principal:</b> ${escapeHtml(lead.join(", ") || "(ninguno)")}</div>
+        <div style="margin-top:6px"><b>Coro:</b> ${escapeHtml(choir.join(", ") || "(ninguno)")}</div>
+        <div style="margin-top:6px"><b>Instrumentos:</b></div>
+        <pre class="lyrics" style="margin-top:6px">${escapeHtml(
+          Object.entries(inst).map(([k,v])=>`${k}: ${v.join(", ") || "(ninguno)"}`).join("\n")
+        )}</pre>
+      </div>
+    `;
+  }
+
+  memSearchEl.addEventListener("input", renderMembers);
+
+  /* ================== Firestore listeners ================== */
+  onSnapshot(collection(db,"songs"), (snap)=>{
+    netStatus.textContent = "✅ Conectado (Firebase)";
+    netStatus.className = "status ok";
+
+    songsCache.clear();
+    snap.forEach(docu=>{
+      const d = docu.data();
+      if(d.deleted) return;
+      songsCache.set(docu.id, d);
+    });
+
+    renderLibraryList();
+    fillPickers();
+    updateTransposePreview();
+    renderOfficial();
+    renderMy();
+  }, (err)=>{
+    console.error(err);
+    netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
+    netStatus.className = "status warn";
+  });
+
+  onSnapshot(officialRef, async (snap)=>{
+    const data = snap.exists() ? (snap.data()||{}) : {};
+    officialList = normalizeItems(data.items);
+    officialMeta = normalizeOfficialMeta(data.meta);
+
+    // set input values (name/date/comments)
+    syncOfficialInputsFromMeta();
+
+    // refresh UI
+    renderOfficial();
+  });
+
+  onSnapshot(membersCol, (snap)=>{
+    membersCache.clear();
+    snap.forEach(docu=>{
+      const d = docu.data() || {};
+      membersCache.set(docu.id, d);
+    });
+
+    // refresh official selectors and members list
+    renderMembers();
+    renderOfficial();
+  });
+
+  /* ================== Init ================== */
+  if(savedKey && savedKey.trim() === EDIT_KEY_MASTER) setUnlocked(true);
+  else setUnlocked(false);
+
+  tryLoadImportedFromUrl();
+  setPrintTarget("official");
+
+  // integrantes init
+  window.clearMemberForm();
+  renderMemberExtraInstList();
+
+  // first render placeholder
+  renderLibraryList();
 </script>
 
 </body>
