@@ -166,46 +166,6 @@
       border-radius:0;
       background:#fff;
     }
-
-    .print-quick-sheet{
-      page-break-inside:avoid;
-      margin:0 0 18px;
-    }
-
-    .print-quick-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:8px;
-    }
-
-    .print-quick-card{
-      border:1px solid #000;
-      padding:8px;
-      page-break-inside:avoid;
-      break-inside:avoid;
-    }
-
-    .print-quick-title{
-      font-size:12px;
-      font-weight:800;
-      margin:0 0 4px;
-      line-height:1.2;
-    }
-
-    .print-quick-meta{
-      font-size:11px;
-      margin:0 0 4px;
-      line-height:1.2;
-    }
-
-    .print-quick-chords{
-      white-space:pre-wrap;
-      font-family:ui-monospace,Menlo,monospace;
-      font-size:10px;
-      line-height:1.25;
-      margin:0;
-    }
   }
 </style>
 </head>
@@ -1666,26 +1626,6 @@ Puente suave"></textarea>
       return `${idx + 1}. ${s?.title || "(Sin título)"}`;
     }).join("\n");
 
-    const officialQuickSheetHtml = visible.map((entry, idx) => {
-      const s = getSong(entry.id);
-      const isMin = (s.mode==="minor");
-      const originalKey = s.key || "C";
-      const toKeyRaw = entry.toKey || originalKey;
-      const originalKeyLabel = originalKey + (isMin ? "m" : "");
-      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
-      const prefer = s.prefer || "sharps";
-      const transposed = transposeAuto(s.body || "", originalKey, toKeyRaw, prefer);
-      const chordsOnly = extractChordsOnly(transposed);
-
-      return `
-        <div class="print-quick-card">
-          <div class="print-quick-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
-          <div class="print-quick-meta">Original: ${escapeHtml(originalKeyLabel)} • Tocar en: ${escapeHtml(toKeyLabel)}</div>
-          <pre class="print-quick-chords">${escapeHtml(chordsOnly)}</pre>
-        </div>
-      `;
-    }).join("");
-
     const header = document.createElement("div");
     header.className = "print-block";
     header.innerHTML = `
@@ -1710,14 +1650,6 @@ Puente suave"></textarea>
 
       <div class="print-section-title">Orden de canciones:</div>
       <pre class="print-song-index">${escapeHtml(officialSongTitles || "(Sin canciones)")}</pre>
-
-      <div class="print-section-title">Guía rápida de acordes:</div>
-      <div class="print-quick-sheet">
-        <div class="print-quick-grid">
-          ${officialQuickSheetHtml || '<div class="print-quick-card">(Sin canciones)</div>'}
-        </div>
-      </div>
-
       <hr />
     `;
     officialPrintBlocks.appendChild(header);
@@ -1974,26 +1906,6 @@ Puente suave"></textarea>
       return `${idx + 1}. ${s?.title || "(Sin título)"}`;
     }).join("\n");
 
-    const myQuickSheetHtml = visible.map((entry, idx) => {
-      const s = getSong(entry.id);
-      const isMin = (s.mode==="minor");
-      const originalKey = s.key || "C";
-      const toKeyRaw = entry.toKey || originalKey;
-      const originalKeyLabel = originalKey + (isMin ? "m" : "");
-      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
-      const prefer = s.prefer || "sharps";
-      const transposed = transposeAuto(s.body || "", originalKey, toKeyRaw, prefer);
-      const chordsOnly = extractChordsOnly(transposed);
-
-      return `
-        <div class="print-quick-card">
-          <div class="print-quick-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
-          <div class="print-quick-meta">Original: ${escapeHtml(originalKeyLabel)} • Tocar en: ${escapeHtml(toKeyLabel)}</div>
-          <pre class="print-quick-chords">${escapeHtml(chordsOnly)}</pre>
-        </div>
-      `;
-    }).join("");
-
     const headerHtml = `
       <div class="print-block">
         <div class="print-title">Mi Lista de Alabanzas</div>
@@ -2003,14 +1915,6 @@ Puente suave"></textarea>
 
         <div class="print-section-title">Orden de canciones:</div>
         <pre class="print-song-index">${escapeHtml(mySongTitles || "(Sin canciones)")}</pre>
-
-        <div class="print-section-title">Guía rápida de acordes:</div>
-        <div class="print-quick-sheet">
-          <div class="print-quick-grid">
-            ${myQuickSheetHtml || '<div class="print-quick-card">(Sin canciones)</div>'}
-          </div>
-        </div>
-
         <hr />
       </div>
     `;
