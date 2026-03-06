@@ -221,7 +221,7 @@
 <div id="mylist" class="card hidden">
   <div class="grid2 no-print">
     <div>
-      <h3 style="margin:0 0 10px">Mi Lista de Alabanzas (personal)</h3>
+      <h3 style="margin:0 0 10px">Mi Lista de Alabanzas (personal) ✅ Libre para todos</h3>
 
       <div class="mini">
         <select id="songPickerMy" style="flex:1;min-width:240px"></select>
@@ -230,9 +230,8 @@
       </div>
 
       <div class="muted">
-        ✅ Aquí podés cambiar <b>Tocar en</b> por canción (igual que la lista oficial).
-        <br>✅ Para reordenar: <b>modo edición</b> → arrastrar con el icono ⠿.
-        <br>Tu lista se guarda de forma <b>personal por dispositivo</b> (no afecta a los demás).
+        ✅ Esta lista es <b>personal por dispositivo</b> y está <b>libre</b>: se puede agregar, quitar, cambiar tono y reordenar sin clave.
+        <br>Para reordenar: arrastrá con ⠿.
       </div>
 
       <div class="mini" style="margin-top:10px">
@@ -277,7 +276,8 @@
   </div>
 
   <p class="muted">
-    Clave de edición para permitir Guardar/Eliminar y cambios de listas.
+    La clave solo afecta: <b>Guardar/Eliminar canciones</b> y la <b>Lista Oficial</b>.
+    <br><b>Mi Lista</b> es libre.
   </p>
 </div>
 
@@ -348,7 +348,7 @@
   let officialSet = [];       // [{id,toKey}]
   const officialRef = doc(db,"shared","today");
 
-  // Personal (tu lista)
+  // Personal (tu lista) - LIBRE
   let mySet = [];             // [{id,toKey}]
   const mySetRef = doc(db,"shared","personal_"+deviceId);
 
@@ -365,6 +365,7 @@
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
     renderOfficial();
+    // 👇 Mi Lista NO depende del bloqueo, igual se renderiza normal:
     renderMySet();
   }
 
@@ -708,7 +709,7 @@
     setUnlocked(false);
   };
 
-  /* ================== Biblioteca (Guardar/Eliminar/Cargar) ================== */
+  /* ================== Biblioteca (Guardar/Eliminar/Cargar) - BLOQUEADO ================== */
   window.clearForm = function(){
     currentId = null;
     titleEl.value = "";
@@ -771,7 +772,7 @@
     window.showTab("library");
   };
 
-  /* ================== Lista Oficial (compartida) ================== */
+  /* ================== Lista Oficial (compartida) - BLOQUEADA ================== */
   async function saveOfficial(){
     await setDoc(officialRef, { items: officialSet }, { merge:true });
   }
@@ -796,11 +797,12 @@
   };
 
   window.setOfficialToKey = async function(id, toKey){
+    if(!unlocked) return;
     const entry = officialSet.find(x=>x.id===id);
     if(!entry) return;
     entry.toKey = toKey;
     officialSet = officialSet.map(x=> x.id===id ? entry : x);
-    if(unlocked) await saveOfficial();
+    await saveOfficial();
     renderOfficial();
   };
 
@@ -810,17 +812,14 @@
     await saveOfficial();
   };
 
-  window.printOfficial = function(){
-    window.print();
-  };
+  window.printOfficial = function(){ window.print(); };
 
-  /* ================== Mi Lista (personal) ================== */
+  /* ================== Mi Lista (personal) - LIBRE ✅ ================== */
   async function saveMy(){
     await setDoc(mySetRef, { items: mySet }, { merge:true });
   }
 
   window.addToMy = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
     const id = songPickerMyEl.value;
     if(!id){ alert("Elegí una canción."); return; }
     if(mySet.some(x=>x.id===id)){ alert("Ya está en tu lista."); return; }
@@ -832,7 +831,6 @@
   };
 
   window.clearMy = async function(){
-    if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
     if(!confirm("¿Vaciar tu lista personal?")) return;
     mySet = [];
     await saveMy();
@@ -843,21 +841,18 @@
     if(!entry) return;
     entry.toKey = toKey;
     mySet = mySet.map(x=> x.id===id ? entry : x);
-    if(unlocked) await saveMy();
+    await saveMy();
     renderMySet();
   };
 
   window.removeFromMy = async function(id){
-    if(!unlocked) return;
     mySet = mySet.filter(x=>x.id!==id);
     await saveMy();
   };
 
-  window.printMy = function(){
-    window.print();
-  };
+  window.printMy = function(){ window.print(); };
 
-  /* ================== Drag & Drop reorder (OFICIAL) ================== */
+  /* ================== Drag & Drop reorder (OFICIAL) - BLOQUEADO ================== */
   async function reorderOfficial(draggedId, targetId){
     if(!unlocked) return;
 
@@ -909,10 +904,8 @@
     });
   }
 
-  /* ================== Drag & Drop reorder (MI LISTA) ✅ ================== */
+  /* ================== Drag & Drop reorder (MI LISTA) - LIBRE ✅ ================== */
   async function reorderMy(draggedId, targetId){
-    if(!unlocked) return;
-
     const from = mySet.findIndex(x=>x.id===draggedId);
     const to   = mySet.findIndex(x=>x.id===targetId);
     if(from<0 || to<0 || from===to) return;
@@ -927,8 +920,6 @@
   }
 
   function attachDragHandlersMy(row){
-    if(!unlocked) return;
-
     row.addEventListener("dragstart", (e)=>{
       dragId = row.dataset.id;
       row.classList.add("dragging");
@@ -1050,7 +1041,7 @@
     });
   }
 
-  /* ================== Render Mi Lista (CAMBIO DE TONO + ORDEN ✅) ================== */
+  /* ================== Render Mi Lista (LIBRE: tono + orden) ================== */
   function renderMySet(){
     myOrderEl.innerHTML = "";
     mySongsEl.innerHTML = "";
@@ -1063,7 +1054,7 @@
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
       const originalKey = s.key || "C";
-      const toKeyRaw = entry.toKey || originalKey; // default: original
+      const toKeyRaw = entry.toKey || originalKey;
       const prefer = s.prefer || "sharps";
 
       const originalKeyLabel = originalKey + (isMin ? "m" : "");
@@ -1076,12 +1067,12 @@
       row.className = "list-item";
       row.dataset.id = entry.id;
 
-      // ✅ draggable solo en modo edición
-      row.draggable = !!unlocked;
+      // ✅ Mi Lista siempre reordenable
+      row.draggable = true;
 
       row.innerHTML = `
         <div style="display:flex;gap:10px;align-items:center">
-          <span class="drag-handle" title="${unlocked ? "Arrastrar para ordenar" : "Activa modo edición para arrastrar"}">⠿</span>
+          <span class="drag-handle" title="Arrastrar para ordenar">⠿</span>
           <div>
             <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
             <div class="muted">
@@ -1092,8 +1083,8 @@
         </div>
         <div class="mini">
           <label class="muted" style="margin:0">Tocar en:</label>
-          <select data-id="${entry.id}" ${unlocked ? "" : "disabled"} style="min-width:170px"></select>
-          <button onclick="removeFromMy('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
+          <select data-id="${entry.id}" style="min-width:170px"></select>
+          <button onclick="removeFromMy('${entry.id}')">Quitar</button>
         </div>
       `;
       myOrderEl.appendChild(row);
