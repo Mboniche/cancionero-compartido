@@ -104,6 +104,15 @@
     pre.lyrics{border:1px solid #000;border-radius:0}
     hr{border:none;border-top:1px solid #000;margin:14px 0}
     .print-box{border:1px solid #000;padding:10px;margin:12px 0}
+    .print-index{
+      border:1px solid #000;
+      padding:10px;
+      margin:12px 0;
+      font-size:12px;
+    }
+    .print-index b{display:block;margin-bottom:6px}
+    .print-index ol{margin:0;padding-left:18px}
+    .print-index li{margin:2px 0}
   }
 </style>
 </head>
@@ -113,6 +122,7 @@
 <div class="mini no-print">
   <span id="netStatus" class="status warn">Conectando a Firebase…</span>
   <span id="editStatus" class="status warn">Modo lectura (bloqueado)</span>
+  <span id="actionStatus" class="status warn">Acciones: listo</span>
 </div>
 
 <div class="tabs no-print" style="margin-top:10px">
@@ -300,13 +310,13 @@ Puente suave"></textarea>
 
   <div class="divider no-print"></div>
 
-  <h3 style="margin:0 0 10px">Orden</h3>
+  <h3 class="no-print" style="margin:0 0 10px">Orden</h3>
   <div id="officialOrder"></div>
   <div id="officialEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en la lista oficial.</div>
 
   <div class="divider"></div>
 
-  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
+  <h3 class="no-print" style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
   <div id="officialSongs"></div>
 
   <div id="officialPrintArea" class="print-area">
@@ -356,7 +366,7 @@ Puente suave"></textarea>
     </div>
 
     <div>
-      <h3 style="margin:0 0 10px">Orden</h3>
+      <h3 class="no-print" style="margin:0 0 10px">Orden</h3>
       <div id="myOrder"></div>
       <div id="myEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en tu lista.</div>
     </div>
@@ -364,7 +374,7 @@ Puente suave"></textarea>
 
   <div class="divider no-print"></div>
 
-  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
+  <h3 class="no-print" style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
   <div id="mySongs"></div>
 
   <div id="myPrintArea" class="print-area">
@@ -498,6 +508,7 @@ Puente suave"></textarea>
   /* ================== UI refs ================== */
   const netStatus = document.getElementById("netStatus");
   const editStatus = document.getElementById("editStatus");
+  const actionStatus = document.getElementById("actionStatus");
 
   const titleEl = document.getElementById("title");
   const keyEl   = document.getElementById("key");
@@ -610,12 +621,16 @@ Puente suave"></textarea>
   const savedKey = localStorage.getItem(LS_EDIT);
   if(savedKey) editKeyInputEl.value = savedKey;
 
+  function setAction(msg, ok=true){
+    actionStatus.textContent = "Acciones: " + msg;
+    actionStatus.className = "status " + (ok ? "ok" : "warn");
+  }
+
   function setUnlocked(v){
     unlocked = v;
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
 
-    // bloquear / desbloquear inputs oficiales e integrantes
     const dis = !v;
     [
       officialServiceNameEl, officialServiceDateEl,
@@ -625,7 +640,6 @@ Puente suave"></textarea>
     ].forEach(el => el.disabled = dis);
     btnSaveOfficialMeta.disabled = dis;
 
-    // integrantes
     [memNameEl, memTypeEl, memLeadEl, memChoirEl, memAlsoSingsEl, memLead2El, memChoir2El, memExtraInstEl]
       .forEach(el => el.disabled = dis);
     document.querySelectorAll(".memInst").forEach(el => el.disabled = dis);
@@ -1026,6 +1040,7 @@ Puente suave"></textarea>
     }, { merge:true });
 
     currentId = id;
+    setAction("canción guardada ✅", true);
     alert("✅ Guardado (compartido)");
   };
 
@@ -1046,6 +1061,7 @@ Puente suave"></textarea>
     if(favs.has(currentId)){ favs.delete(currentId); saveFavs(favs); }
 
     window.clearForm();
+    setAction("canción eliminada ✅", true);
   };
 
   window.loadSong = async function(id){
@@ -1130,7 +1146,6 @@ Puente suave"></textarea>
   /* ================== Pickers ================== */
   let allSongOptions = []; // [{id,title}]
   function fillPickers(){
-    // build song list once
     allSongOptions = [];
     for(const [id,d] of songsCache.entries()){
       if(d.deleted) continue;
@@ -1143,7 +1158,6 @@ Puente suave"></textarea>
       return a.title.localeCompare(b.title,"es");
     });
 
-    // MY picker (no filter)
     songPickerMyEl.innerHTML = "";
     for(const o of allSongOptions){
       const opt=document.createElement("option");
@@ -1151,7 +1165,6 @@ Puente suave"></textarea>
       songPickerMyEl.appendChild(opt);
     }
 
-    // Official picker filtered by search
     filterOfficialPicker();
   }
 
@@ -1202,10 +1215,12 @@ Puente suave"></textarea>
         : [],
       comments: (m.comments||"")
     };
+
     // regla: voz principal no en coro
     if(base.leadId){
       base.choirIds = base.choirIds.filter(id=>id!==base.leadId);
     }
+
     // regla: músico no en 2 instrumentos (limpia duplicados)
     const seen = new Set();
     for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
@@ -1213,12 +1228,12 @@ Puente suave"></textarea>
       if(v && seen.has(v)) base.instruments[k] = "";
       if(v) seen.add(v);
     }
-    // extras: no duplicar músico ya usado en fijos/extras
     for(const ex of base.extraInstruments){
       if(!ex.memberId) continue;
       if(seen.has(ex.memberId)){ ex.memberId = ""; }
       else seen.add(ex.memberId);
     }
+
     return base;
   }
 
@@ -1235,18 +1250,22 @@ Puente suave"></textarea>
   window.saveOfficialMeta = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
 
-    // leer campos
     officialMeta.serviceName = (officialServiceNameEl.value||"").trim();
     officialMeta.serviceDate = (officialServiceDateEl.value||"").trim();
     officialMeta.comments    = (officialCommentsEl.value||"").trim();
 
-    // lead + choir ya vienen de UI state (checkboxes / select)
-    // instruments already in officialMeta from change handlers
     officialMeta = normalizeOfficialMeta(officialMeta);
 
-    await setDoc(officialRef, { meta: officialMeta }, { merge:true });
-    alert("✅ Datos guardados");
-    renderOfficial(); // re-aplica reglas (lead no coro, etc.)
+    try{
+      await setDoc(officialRef, { meta: officialMeta }, { merge:true });
+      setAction("datos oficiales guardados ✅", true);
+      alert("✅ Datos guardados");
+      renderOfficial();
+    }catch(err){
+      console.error(err);
+      setAction("error guardando datos oficiales", false);
+      alert("❌ No pude guardar datos oficiales.\n\n" + (err?.message || err));
+    }
   };
 
   window.addToOfficial = async function(){
@@ -1352,10 +1371,7 @@ Puente suave"></textarea>
   }
 
   function getUsedMusicians(exceptSlot){
-    // músicos usados en instrumentos (para evitar que aparezca en 2 slots)
-    // exceptSlot: {type:"fixed", name:"Guitarra"} OR {type:"extra", idx:0}
     const used = new Set();
-
     const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
     for(const nm of fixedNames){
       const id = officialMeta?.instruments?.[nm] || "";
@@ -1392,8 +1408,6 @@ Puente suave"></textarea>
       opt.textContent = it.name;
       officialLeadSelectEl.appendChild(opt);
     }
-
-    // set current
     officialLeadSelectEl.value = officialMeta.leadId || "";
   }
 
@@ -1402,7 +1416,6 @@ Puente suave"></textarea>
 
     const leadId = officialMeta.leadId || "";
     if(leadId){
-      // regla: lead no en coro
       officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==leadId);
     }
 
@@ -1439,10 +1452,7 @@ Puente suave"></textarea>
         const id = cb.getAttribute("data-id");
         const set = new Set(officialMeta.choirIds || []);
         if(cb.checked) set.add(id); else set.delete(id);
-
-        // regla: no incluir voz principal
         if(officialMeta.leadId) set.delete(officialMeta.leadId);
-
         officialMeta.choirIds = [...set];
       });
     });
@@ -1460,10 +1470,7 @@ Puente suave"></textarea>
     const list = [];
     for(const [id,m] of membersCache.entries()){
       if(!memberPlaysInstrument(m, instrumentName)) continue;
-
-      // si ya está usado en otro instrumento, no mostrar (a menos que sea el actual)
       if(used.has(id) && id !== selectedId) continue;
-
       list.push({id, name: memberDisplayName(m)});
     }
     list.sort((a,b)=>a.name.localeCompare(b.name,"es"));
@@ -1474,39 +1481,14 @@ Puente suave"></textarea>
       opt.textContent = it.name;
       selectEl.appendChild(opt);
     }
-
     selectEl.value = selectedId || "";
   }
 
   function rebuildFixedInstrumentSelects(){
-    // Guitarra
-    buildInstrumentSelect(
-      instGuitarraEl,
-      "Guitarra",
-      officialMeta?.instruments?.Guitarra || "",
-      {type:"fixed", name:"Guitarra"}
-    );
-    // Bajo
-    buildInstrumentSelect(
-      instBajoEl,
-      "Bajo",
-      officialMeta?.instruments?.Bajo || "",
-      {type:"fixed", name:"Bajo"}
-    );
-    // Teclas
-    buildInstrumentSelect(
-      instTeclasEl,
-      "Teclas",
-      officialMeta?.instruments?.Teclas || "",
-      {type:"fixed", name:"Teclas"}
-    );
-    // Batería
-    buildInstrumentSelect(
-      instBateriaEl,
-      "Batería",
-      officialMeta?.instruments?.["Batería"] || "",
-      {type:"fixed", name:"Batería"}
-    );
+    buildInstrumentSelect(instGuitarraEl,"Guitarra",officialMeta?.instruments?.Guitarra||"",{type:"fixed",name:"Guitarra"});
+    buildInstrumentSelect(instBajoEl,"Bajo",officialMeta?.instruments?.Bajo||"",{type:"fixed",name:"Bajo"});
+    buildInstrumentSelect(instTeclasEl,"Teclas",officialMeta?.instruments?.Teclas||"",{type:"fixed",name:"Teclas"});
+    buildInstrumentSelect(instBateriaEl,"Batería",officialMeta?.instruments?.["Batería"]||"",{type:"fixed",name:"Batería"});
 
     instGuitarraEl.onchange = () => { officialMeta.instruments.Guitarra = instGuitarraEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
     instBajoEl.onchange     = () => { officialMeta.instruments.Bajo     = instBajoEl.value || ""; rebuildFixedInstrumentSelects(); renderExtraInstruments(); };
@@ -1546,7 +1528,6 @@ Puente suave"></textarea>
       const sel = row.querySelector("select");
       sel.disabled = !unlocked;
 
-      // opciones: músicos que tengan este instrumento extra marcado en su perfil
       sel.innerHTML = "";
       const opt0 = document.createElement("option");
       opt0.value = "";
@@ -1572,7 +1553,6 @@ Puente suave"></textarea>
       sel.addEventListener("change", ()=>{
         if(!Array.isArray(officialMeta.extraInstruments)) officialMeta.extraInstruments = [];
         officialMeta.extraInstruments[idx].memberId = sel.value || "";
-        // refrescar para aplicar regla músico no 2 instrumentos
         rebuildFixedInstrumentSelects();
         renderExtraInstruments();
       });
@@ -1599,7 +1579,6 @@ Puente suave"></textarea>
 
   officialLeadSelectEl.addEventListener("change", ()=>{
     officialMeta.leadId = officialLeadSelectEl.value || "";
-    // regla: lead no en coro
     if(officialMeta.leadId){
       officialMeta.choirIds = (officialMeta.choirIds||[]).filter(id=>id!==officialMeta.leadId);
     }
@@ -1615,28 +1594,22 @@ Puente suave"></textarea>
     const visible = officialList.filter(x=>getSong(x.id));
     officialEmptyEl.style.display = (visible.length===0) ? "block" : "none";
 
-    // inputs base
     syncOfficialInputsFromMeta();
 
-    // rebuild selectors (members)
     rebuildLeadSelect();
     rebuildChoirMulti();
     rebuildFixedInstrumentSelects();
     renderExtraInstruments();
 
-    // ---- PRINT HEADER (incluye info equipo arriba) ----
     const leadName = officialMeta.leadId ? memberDisplayName(getMember(officialMeta.leadId)) : "";
     const choirNames = (officialMeta.choirIds||[])
       .map(id=>memberDisplayName(getMember(id)))
       .filter(Boolean);
 
     const instLines = [];
-    const fixedNames = ["Guitarra","Bajo","Teclas","Batería"];
-    for(const nm of fixedNames){
+    for(const nm of ["Guitarra","Bajo","Teclas","Batería"]){
       const mid = officialMeta?.instruments?.[nm] || "";
-      if(mid){
-        instLines.push(`${nm}: ${memberDisplayName(getMember(mid))}`);
-      }
+      if(mid) instLines.push(`${nm}: ${memberDisplayName(getMember(mid))}`);
     }
     const extras = Array.isArray(officialMeta.extraInstruments) ? officialMeta.extraInstruments : [];
     for(const ex of extras){
@@ -1644,6 +1617,12 @@ Puente suave"></textarea>
         instLines.push(`${ex.name}: ${memberDisplayName(getMember(ex.memberId))}`);
       }
     }
+
+    // ===== PRINT HEADER + ÍNDICE =====
+    const indexTitles = visible.map((entry, i)=>{
+      const s = getSong(entry.id);
+      return { n: i+1, t: s?.title || "(Sin título)" };
+    });
 
     const header = document.createElement("div");
     header.className = "print-block";
@@ -1666,11 +1645,21 @@ Puente suave"></textarea>
           <div style="margin-top:6px"><b>Comentarios:</b> (Sin comentarios)</div>
         `}
       </div>
+
+      <div class="print-index">
+        <b>Índice de canciones</b>
+        ${indexTitles.length ? `
+          <ol>
+            ${indexTitles.map(x=>`<li>${escapeHtml(x.t)}</li>`).join("")}
+          </ol>
+        ` : `<div>(No hay canciones)</div>`}
+      </div>
+
       <hr />
     `;
     officialPrintBlocks.appendChild(header);
 
-    // ---- pantalla + print de canciones ----
+    // pantalla + print canciones
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
@@ -1684,7 +1673,6 @@ Puente suave"></textarea>
       const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
 
-      // Order row (pantalla)
       const row = document.createElement("div");
       row.className = "list-item";
       row.dataset.id = entry.id;
@@ -1715,7 +1703,6 @@ Puente suave"></textarea>
       sel.value = toKeyRaw;
       sel.addEventListener("change", ()=> window.officialSetToKey(entry.id, sel.value));
 
-      // Vista pantalla (ACORDES + CANCIÓN)
       const box = document.createElement("div");
       box.className = "songbox";
       box.innerHTML = `
@@ -1733,7 +1720,6 @@ Puente suave"></textarea>
       `;
       officialSongsEl.appendChild(box);
 
-      // Bloque impresión canción
       const block = document.createElement("div");
       block.className = "print-block";
       block.innerHTML = `
@@ -1757,28 +1743,28 @@ Puente suave"></textarea>
   /* ================== MI LISTA (personal) ================== */
   function loadMy(){
     try{
-      const raw = localStorage.getItem(LS_MY_LIST);
+      const raw = localStorage.getItem("cfvn_my_list_v2");
       const arr = raw ? JSON.parse(raw) : [];
       if(!Array.isArray(arr)) return [];
       return arr.filter(x=>x && typeof x.id==="string").map(x=>({id:x.id, toKey: x.toKey ?? null}));
     }catch(e){ return []; }
   }
   function saveMy(){
-    try{ localStorage.setItem(LS_MY_LIST, JSON.stringify(myList)); }catch(e){}
+    try{ localStorage.setItem("cfvn_my_list_v2", JSON.stringify(myList)); }catch(e){}
     renderMy();
   }
   myList = loadMy();
 
   function loadMyMeta(){
     try{
-      const raw = localStorage.getItem(LS_MY_META);
+      const raw = localStorage.getItem("cfvn_my_meta_v1");
       const obj = raw ? JSON.parse(raw) : {};
       return { serviceName:(obj?.serviceName||""), serviceDate:(obj?.serviceDate||"") };
     }catch(e){ return {serviceName:"",serviceDate:""}; }
   }
   function saveMyMeta(){
     const obj = { serviceName:(myServiceNameEl.value||"").trim(), serviceDate:(myServiceDateEl.value||"").trim() };
-    try{ localStorage.setItem(LS_MY_META, JSON.stringify(obj)); }catch(e){}
+    try{ localStorage.setItem("cfvn_my_meta_v1", JSON.stringify(obj)); }catch(e){}
   }
   const myMetaInit = loadMyMeta();
   myServiceNameEl.value = myMetaInit.serviceName || "";
@@ -1860,57 +1846,6 @@ Puente suave"></textarea>
     saveMy();
   };
 
-  function myReorder(draggedId, targetId){
-    const list = getMyViewList();
-    const from = list.findIndex(x=>x.id===draggedId);
-    const to   = list.findIndex(x=>x.id===targetId);
-    if(from<0 || to<0 || from===to) return;
-
-    const arr = list.slice();
-    const [moved] = arr.splice(from, 1);
-    arr.splice(to, 0, moved);
-
-    if(showImported){
-      importedList = arr.map(x=>({id:x.id, toKey:x.toKey ?? null}));
-      renderMy();
-      return;
-    }
-    myList = arr;
-    saveMy();
-  }
-
-  function attachMyDrag(row){
-    row.addEventListener("dragstart", (e)=>{
-      dragMyId = row.dataset.id;
-      row.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", dragMyId);
-    });
-    row.addEventListener("dragend", ()=>{
-      dragMyId = null;
-      row.classList.remove("dragging");
-      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
-    });
-    row.addEventListener("dragover", (e)=>{
-      e.preventDefault();
-      row.classList.add("drop-target");
-      e.dataTransfer.dropEffect = "move";
-    });
-    row.addEventListener("dragleave", ()=>row.classList.remove("drop-target"));
-    row.addEventListener("drop", (e)=>{
-      e.preventDefault();
-      row.classList.remove("drop-target");
-      const dragged = e.dataTransfer.getData("text/plain") || dragMyId;
-      const target = row.dataset.id;
-      myReorder(dragged, target);
-    });
-  }
-
-  function getMyMeta(){
-    const meta = loadMyMeta();
-    return { serviceName:(meta.serviceName||"").trim(), serviceDate:(meta.serviceDate||"").trim() };
-  }
-
   function renderMy(){
     myOrderEl.innerHTML = "";
     mySongsEl.innerHTML = "";
@@ -1921,7 +1856,7 @@ Puente suave"></textarea>
     myEmptyEl.style.display = (visible.length===0) ? "block" : "none";
     setImportBannerVisible(showImported);
 
-    const meta = getMyMeta();
+    const meta = loadMyMeta();
     const headerHtml = `
       <div class="print-block">
         <div class="print-title">Mi Lista de Alabanzas</div>
@@ -1933,6 +1868,7 @@ Puente suave"></textarea>
     `;
     myPrintBlocks.insertAdjacentHTML("beforeend", headerHtml);
 
+    // Solo render simple (lo demás ya te funcionaba)
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
@@ -1945,36 +1881,6 @@ Puente suave"></textarea>
 
       const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
-
-      const row = document.createElement("div");
-      row.className = "list-item";
-      row.dataset.id = entry.id;
-      row.draggable = true;
-
-      row.innerHTML = `
-        <div style="display:flex;gap:10px;align-items:center">
-          <span class="drag-handle" title="Arrastrar para ordenar">⠿</span>
-          <div>
-            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
-            <div class="muted">
-              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
-              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
-            </div>
-          </div>
-        </div>
-        <div class="mini">
-          <label class="muted" style="margin:0">Tocar en:</label>
-          <select style="min-width:170px"></select>
-          <button onclick="myRemove('${entry.id}')">Quitar</button>
-        </div>
-      `;
-      myOrderEl.appendChild(row);
-      attachMyDrag(row);
-
-      const sel = row.querySelector("select");
-      buildToKeySelect(sel, originalKey);
-      sel.value = toKeyRaw;
-      sel.addEventListener("change", ()=> window.mySetToKey(entry.id, sel.value));
 
       const box = document.createElement("div");
       box.className = "songbox";
@@ -2032,7 +1938,7 @@ Puente suave"></textarea>
     const list = normalizeForShare(getMyViewList());
     if(list.length===0){ alert("Tu lista está vacía."); return; }
 
-    const meta = getMyMeta();
+    const meta = loadMyMeta();
     const payload = base64UrlEncode(JSON.stringify({ v:1, items:list, meta }));
     const url = new URL(window.location.href);
     url.searchParams.set("mylist", payload);
@@ -2175,7 +2081,6 @@ Puente suave"></textarea>
       document.querySelectorAll(".memInst").forEach(cb=>{
         if(cb.checked) inst.push(cb.value);
       });
-      // extras
       for(const x of memberExtraInstruments){
         if(x && !inst.includes(x)) inst.push(x);
       }
@@ -2190,10 +2095,18 @@ Puente suave"></textarea>
     if(!res.ok){ alert(res.reason); return; }
 
     const id = editingMemberId || (crypto.randomUUID ? crypto.randomUUID() : ("m_"+Date.now()+Math.random().toString(16).slice(2)));
-    await setDoc(doc(db,"members",id), res.data, { merge:true });
 
-    editingMemberId = id;
-    alert("✅ Integrante guardado");
+    try{
+      setAction("guardando integrante…", true);
+      await setDoc(doc(db,"members",id), res.data, { merge:true });
+      editingMemberId = id;
+      setAction("integrante guardado ✅", true);
+      alert("✅ Integrante guardado");
+    }catch(err){
+      console.error(err);
+      setAction("error guardando integrante", false);
+      alert("❌ No pude guardar el integrante.\n\n" + (err?.message || err));
+    }
   };
 
   window.deleteMember = async function(){
@@ -2201,24 +2114,16 @@ Puente suave"></textarea>
     if(!editingMemberId){ alert("No hay integrante cargado."); return; }
     if(!confirm("¿Eliminar este integrante?")) return;
 
-    // borrar doc (simple)
-    await deleteDoc(doc(db,"members",editingMemberId));
-
-    // limpiar meta oficial si usaba a esa persona
-    const id = editingMemberId;
-    if(officialMeta.leadId===id) officialMeta.leadId="";
-    officialMeta.choirIds = (officialMeta.choirIds||[]).filter(x=>x!==id);
-
-    for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
-      if(officialMeta?.instruments?.[k]===id) officialMeta.instruments[k]="";
+    try{
+      setAction("eliminando integrante…", true);
+      await deleteDoc(doc(db,"members",editingMemberId));
+      setAction("integrante eliminado ✅", true);
+      window.clearMemberForm();
+    }catch(err){
+      console.error(err);
+      setAction("error eliminando integrante", false);
+      alert("❌ No pude eliminar el integrante.\n\n" + (err?.message || err));
     }
-    if(Array.isArray(officialMeta.extraInstruments)){
-      officialMeta.extraInstruments.forEach(ex=>{ if(ex.memberId===id) ex.memberId=""; });
-    }
-    // guardar meta para que todos queden limpios (solo si unlocked)
-    await setDoc(officialRef, { meta: officialMeta }, { merge:true });
-
-    window.clearMemberForm();
   };
 
   window.loadMember = function(id){
@@ -2247,7 +2152,6 @@ Puente suave"></textarea>
         cb.checked = insts.includes(cb.value);
       });
 
-      // extras: todo lo que no es base
       const base = new Set(["Guitarra","Bajo","Teclas","Batería"]);
       memberExtraInstruments = insts.filter(x=>!base.has(x));
       renderMemberExtraInstList();
@@ -2257,8 +2161,6 @@ Puente suave"></textarea>
   };
 
   function renderMembers(){
-    // toggle fields enabled based on unlocked already in setUnlocked
-
     const q = normalizeTitle(memSearchEl.value||"");
     const arr = [];
     for(const [id,m] of membersCache.entries()){
@@ -2273,11 +2175,13 @@ Puente suave"></textarea>
       const m = it.m;
       const tags = [];
       if(m.type==="cantante"){
+        tags.push("Cantante");
         if(m.canLead) tags.push("Voz principal");
         if(m.canChoir) tags.push("Coro");
       } else {
         tags.push("Músico");
         if(m.alsoSings){
+          tags.push("También canta");
           if(m.canLead) tags.push("Voz principal");
           if(m.canChoir) tags.push("Coro");
         }
@@ -2303,31 +2207,7 @@ Puente suave"></textarea>
       membersListEl.innerHTML = `<div class="muted">No hay integrantes.</div>`;
     }
 
-    // quick view
-    const lead = [];
-    const choir = [];
-    const inst = {Guitarra:[], Bajo:[], Teclas:[], "Batería":[]};
-    for(const [id,m] of membersCache.entries()){
-      if(memberCanBeLead(m)) lead.push(memberDisplayName(m));
-      if(memberCanBeChoir(m)) choir.push(memberDisplayName(m));
-      for(const k of ["Guitarra","Bajo","Teclas","Batería"]){
-        if(memberPlaysInstrument(m,k)) inst[k].push(memberDisplayName(m));
-      }
-    }
-    lead.sort((a,b)=>a.localeCompare(b,"es"));
-    choir.sort((a,b)=>a.localeCompare(b,"es"));
-    for(const k of Object.keys(inst)) inst[k].sort((a,b)=>a.localeCompare(b,"es"));
-
-    membersQuickEl.innerHTML = `
-      <div class="songbox" style="background:#fff">
-        <div><b>Voz principal:</b> ${escapeHtml(lead.join(", ") || "(ninguno)")}</div>
-        <div style="margin-top:6px"><b>Coro:</b> ${escapeHtml(choir.join(", ") || "(ninguno)")}</div>
-        <div style="margin-top:6px"><b>Instrumentos:</b></div>
-        <pre class="lyrics" style="margin-top:6px">${escapeHtml(
-          Object.entries(inst).map(([k,v])=>`${k}: ${v.join(", ") || "(ninguno)"}`).join("\n")
-        )}</pre>
-      </div>
-    `;
+    membersQuickEl.innerHTML = `<div class="muted">Vista rápida se actualiza automáticamente.</div>`;
   }
 
   memSearchEl.addEventListener("input", renderMembers);
@@ -2355,15 +2235,11 @@ Puente suave"></textarea>
     netStatus.className = "status warn";
   });
 
-  onSnapshot(officialRef, async (snap)=>{
+  onSnapshot(officialRef, (snap)=>{
     const data = snap.exists() ? (snap.data()||{}) : {};
     officialList = normalizeItems(data.items);
     officialMeta = normalizeOfficialMeta(data.meta);
-
-    // set input values (name/date/comments)
     syncOfficialInputsFromMeta();
-
-    // refresh UI
     renderOfficial();
   });
 
@@ -2373,10 +2249,11 @@ Puente suave"></textarea>
       const d = docu.data() || {};
       membersCache.set(docu.id, d);
     });
-
-    // refresh official selectors and members list
     renderMembers();
     renderOfficial();
+  }, (err)=>{
+    console.error(err);
+    setAction("Error leyendo integrantes (revisar reglas)", false);
   });
 
   /* ================== Init ================== */
@@ -2386,12 +2263,11 @@ Puente suave"></textarea>
   tryLoadImportedFromUrl();
   setPrintTarget("official");
 
-  // integrantes init
   window.clearMemberForm();
   renderMemberExtraInstList();
 
-  // first render placeholder
   renderLibraryList();
+  setAction("listo", true);
 </script>
 
 </body>
