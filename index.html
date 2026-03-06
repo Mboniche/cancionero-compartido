@@ -166,6 +166,28 @@
       border-radius:0;
       background:#fff;
     }
+
+    .print-mini-song{
+      margin:0 0 6px;
+      padding:6px 8px;
+      border:1px solid #000;
+      background:#fff;
+      page-break-inside:avoid;
+    }
+
+    .print-mini-song-title{
+      font-size:13px;
+      font-weight:800;
+      margin:0 0 6px;
+    }
+
+    .print-mini-song-chords{
+      white-space:pre-wrap;
+      font-family:ui-monospace,Menlo,monospace;
+      font-size:11px;
+      line-height:1.25;
+      margin:0;
+    }
   }
 </style>
 </head>
@@ -1654,6 +1676,43 @@ Puente suave"></textarea>
     `;
     officialPrintBlocks.appendChild(header);
 
+    const officialSummary = document.createElement("div");
+    officialSummary.className = "print-block";
+    officialSummary.innerHTML = `
+      <div class="print-title">Resumen de acordes para músicos</div>
+      <div class="print-meta">
+        ${escapeHtml(officialMeta.serviceName || "")}${officialMeta.serviceDate ? " • Fecha: "+escapeHtml(fmtDateISO(officialMeta.serviceDate)) : ""}
+      </div>
+    `;
+
+    visible.forEach((entry, idx) => {
+      const s = getSong(entry.id);
+      if(!s) return;
+
+      const isMin = (s.mode === "minor");
+      const originalKey = s.key || "C";
+      const toKeyRaw = entry.toKey || originalKey;
+      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
+      const prefer = s.prefer || "sharps";
+
+      const transposed = transposeAuto(s.body || "", originalKey, toKeyRaw, prefer);
+      const chordsOnly = extractChordsOnly(transposed);
+
+      const songMini = document.createElement("div");
+      songMini.className = "print-mini-song";
+      songMini.innerHTML = `
+        <div class="print-mini-song-title">
+          ${escapeHtml((idx + 1) + ". " + (s.title || "(Sin título)"))}
+          <span style="font-weight:600">• ${escapeHtml(toKeyLabel)}</span>
+        </div>
+        <pre class="print-mini-song-chords">${escapeHtml(chordsOnly)}</pre>
+      `;
+      officialSummary.appendChild(songMini);
+    });
+
+    officialSummary.insertAdjacentHTML("beforeend", `<hr />`);
+    officialPrintBlocks.appendChild(officialSummary);
+
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
@@ -1919,6 +1978,43 @@ Puente suave"></textarea>
       </div>
     `;
     myPrintBlocks.insertAdjacentHTML("beforeend", headerHtml);
+
+    const mySummary = document.createElement("div");
+    mySummary.className = "print-block";
+    mySummary.innerHTML = `
+      <div class="print-title">Resumen de acordes para músicos</div>
+      <div class="print-meta">
+        ${escapeHtml(meta.serviceName || "")}${meta.serviceDate ? " • Fecha: "+escapeHtml(fmtDateISO(meta.serviceDate)) : ""}
+      </div>
+    `;
+
+    visible.forEach((entry, idx) => {
+      const s = getSong(entry.id);
+      if(!s) return;
+
+      const isMin = (s.mode === "minor");
+      const originalKey = s.key || "C";
+      const toKeyRaw = entry.toKey || originalKey;
+      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
+      const prefer = s.prefer || "sharps";
+
+      const transposed = transposeAuto(s.body || "", originalKey, toKeyRaw, prefer);
+      const chordsOnly = extractChordsOnly(transposed);
+
+      const songMini = document.createElement("div");
+      songMini.className = "print-mini-song";
+      songMini.innerHTML = `
+        <div class="print-mini-song-title">
+          ${escapeHtml((idx + 1) + ". " + (s.title || "(Sin título)"))}
+          <span style="font-weight:600">• ${escapeHtml(toKeyLabel)}</span>
+        </div>
+        <pre class="print-mini-song-chords">${escapeHtml(chordsOnly)}</pre>
+      `;
+      mySummary.appendChild(songMini);
+    });
+
+    mySummary.insertAdjacentHTML("beforeend", `<hr />`);
+    myPrintBlocks.appendChild(mySummary);
 
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
