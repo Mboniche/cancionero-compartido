@@ -60,18 +60,17 @@
   .dragging{opacity:.55}
   .drop-target{outline:2px dashed #999; outline-offset:4px}
 
-  /* ===== PRINT (sin duplicados y sin cortes) ===== */
+  /* ===== PRINT ===== */
   @media print{
     .tabs,.no-print{display:none !important}
     body{max-width:none;margin:0}
     .card{border:none;padding:0}
 
-    /* ocultar la vista de pantalla para que no duplique */
-    #setOrder, #setSongs{display:none !important;}
+    #officialOrder, #officialSongs,
+    #myOrder, #mySongs {display:none !important;}
 
-    /* imprimir solo el área de impresión */
-    #printArea{display:block !important;}
-    #printArea.hidden{display:block !important;}
+    #officialPrintArea, #myPrintArea{display:block !important;}
+    #officialPrintArea.hidden, #myPrintArea.hidden{display:block !important;}
 
     .print-block{page-break-inside:avoid;margin:0 0 18px}
     .print-title{font-size:18px;font-weight:800;margin:0 0 6px}
@@ -103,7 +102,9 @@
 
 <div class="tabs no-print" style="margin-top:10px">
   <button onclick="showTab('library')">Biblioteca</button>
-  <button onclick="showTab('today')">Setlist Hoy</button>
+  <button onclick="showTab('official')">Lista de Alabanzas Oficial</button>
+  <button onclick="showTab('mylist')">Mi Lista de Alabanzas</button>
+  <button onclick="showTab('members')">Integrantes</button>
   <button onclick="showTab('config')">Configuración</button>
 </div>
 
@@ -174,44 +175,105 @@
   <div id="songList"></div>
 </div>
 
-<!-- SETLIST HOY -->
-<div id="today" class="card hidden">
+<!-- LISTA OFICIAL -->
+<div id="official" class="card hidden">
   <div class="grid2 no-print">
     <div>
-      <h3 style="margin:0 0 10px">Agregar al Setlist (compartido)</h3>
+      <h3 style="margin:0 0 10px">Lista de Alabanzas Oficial (compartida)</h3>
 
       <div class="mini">
-        <select id="songPicker" style="flex:1;min-width:240px"></select>
-        <button onclick="addToSet()">Agregar</button>
-        <button onclick="clearSet()">Vaciar</button>
+        <select id="songPickerOfficial" style="flex:1;min-width:240px"></select>
+        <button onclick="addToOfficial()">Agregar</button>
+        <button onclick="clearOfficial()">Vaciar</button>
       </div>
 
       <div class="muted">
-        Ahora por defecto queda en el <b>tono original</b>. En el selector aparece primero el original y debajo los demás tonos.
-        <br>Para reordenar: <b>modo edición</b> → arrastrar con el icono ⠿.
+        Por defecto queda en el <b>tono original</b>.
+        <br>Para reordenar: <b>modo edición</b> → arrastrar con ⠿.
       </div>
 
       <div class="mini" style="margin-top:10px">
-        <button onclick="printSetlist()">🖨️ Imprimir setlist</button>
+        <button onclick="printOfficial()">🖨️ Imprimir lista oficial</button>
       </div>
     </div>
 
     <div>
-      <h3 style="margin:0 0 10px">Orden del Setlist</h3>
-      <div id="setOrder"></div>
-      <div id="emptySet" class="muted" style="display:none;margin-top:8px">No hay canciones en el setlist.</div>
+      <h3 style="margin:0 0 10px">Orden (Lista Oficial)</h3>
+      <div id="officialOrder"></div>
+      <div id="officialEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en la lista oficial.</div>
     </div>
   </div>
 
   <hr class="no-print" style="margin:16px 0;border:none;border-top:1px solid #eee">
 
-  <h3 style="margin:0 0 10px">Canciones del Setlist (ACORDES + CANCIÓN)</h3>
-  <div id="setSongs"></div>
+  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
+  <div id="officialSongs"></div>
 
-  <!-- PRINT AREA (solo se imprime esto) -->
-  <div id="printArea" class="hidden">
-    <div id="printBlocks"></div>
+  <div id="officialPrintArea" class="hidden">
+    <div id="officialPrintBlocks"></div>
   </div>
+</div>
+
+<!-- MI LISTA -->
+<div id="mylist" class="card hidden">
+  <div class="grid2 no-print">
+    <div>
+      <h3 style="margin:0 0 10px">Mi Lista de Alabanzas (personal) ✅ Libre</h3>
+
+      <div class="mini">
+        <select id="songPickerMy" style="flex:1;min-width:240px"></select>
+        <button onclick="addToMy()">Agregar</button>
+        <button onclick="clearMy()">Vaciar</button>
+      </div>
+
+      <div class="muted">
+        Esta lista es <b>personal por dispositivo</b> y está libre: agregar, quitar, cambiar tono y reordenar.
+        <br>Reordenar: arrastrá con ⠿.
+      </div>
+
+      <div class="mini" style="margin-top:10px">
+        <button onclick="printMy()">🖨️ Imprimir mi lista</button>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 10px">Orden (Mi Lista)</h3>
+      <div id="myOrder"></div>
+      <div id="myEmpty" class="muted" style="display:none;margin-top:8px">No hay canciones en tu lista.</div>
+    </div>
+  </div>
+
+  <hr class="no-print" style="margin:16px 0;border:none;border-top:1px solid #eee">
+
+  <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
+  <div id="mySongs"></div>
+
+  <div id="myPrintArea" class="hidden">
+    <div id="myPrintBlocks"></div>
+  </div>
+</div>
+
+<!-- INTEGRANTES (lee desde /integrantes) -->
+<div id="members" class="card hidden">
+  <h3 style="margin:0 0 10px">Integrantes</h3>
+
+  <div class="mini no-print">
+    <input id="memberName" placeholder="Nombre" style="flex:1;min-width:220px">
+    <select id="memberRole" style="min-width:180px">
+      <option value="">Rol (opcional)</option>
+      <option>Voz</option>
+      <option>Guitarra</option>
+      <option>Bajo</option>
+      <option>Batería</option>
+      <option>Teclas</option>
+      <option>Director</option>
+      <option>Audio</option>
+    </select>
+    <button onclick="addMember()">Agregar</button>
+  </div>
+
+  <div class="muted">Se muestra lo que ya tenías guardado en Firestore (colección <b>integrantes</b>).</div>
+  <div id="membersList" style="margin-top:10px"></div>
 </div>
 
 <!-- CONFIG -->
@@ -225,7 +287,8 @@
   </div>
 
   <p class="muted">
-    Clave de edición para permitir Guardar/Eliminar y cambios del setlist.
+    La clave solo afecta: <b>Guardar/Eliminar canciones</b> y la <b>Lista Oficial</b>.
+    <br><b>Mi Lista</b> es libre.
   </p>
 </div>
 
@@ -248,6 +311,14 @@
   /* ================== CLAVE ================== */
   const EDIT_KEY_MASTER = "CFVN2026";
 
+  /* ================== ID PERSONAL POR DISPOSITIVO ================== */
+  const DEVICE_KEY = "cancionero_device_id";
+  let deviceId = localStorage.getItem(DEVICE_KEY);
+  if(!deviceId){
+    deviceId = (crypto.randomUUID ? crypto.randomUUID() : ("d_"+Date.now()+Math.random().toString(16).slice(2)));
+    localStorage.setItem(DEVICE_KEY, deviceId);
+  }
+
   /* ================== UI refs ================== */
   const netStatus = document.getElementById("netStatus");
   const editStatus = document.getElementById("editStatus");
@@ -259,10 +330,18 @@
   const bodyEl  = document.getElementById("body");
 
   const songListEl = document.getElementById("songList");
-  const songPickerEl = document.getElementById("songPicker");
-  const setOrderEl = document.getElementById("setOrder");
-  const setSongsEl = document.getElementById("setSongs");
-  const emptySetEl = document.getElementById("emptySet");
+  const songPickerOfficialEl = document.getElementById("songPickerOfficial");
+  const songPickerMyEl = document.getElementById("songPickerMy");
+
+  const officialOrderEl = document.getElementById("officialOrder");
+  const officialSongsEl = document.getElementById("officialSongs");
+  const officialEmptyEl = document.getElementById("officialEmpty");
+  const officialPrintBlocks = document.getElementById("officialPrintBlocks");
+
+  const myOrderEl = document.getElementById("myOrder");
+  const mySongsEl = document.getElementById("mySongs");
+  const myEmptyEl = document.getElementById("myEmpty");
+  const myPrintBlocks = document.getElementById("myPrintBlocks");
 
   const editKeyInputEl = document.getElementById("editKeyInput");
 
@@ -270,13 +349,27 @@
   const toKeySel = document.getElementById("toKey");
   const transposedOut = document.getElementById("transposedOut");
 
-  const printBlocks = document.getElementById("printBlocks");
+  // Integrantes UI
+  const membersListEl = document.getElementById("membersList");
+  const memberNameEl = document.getElementById("memberName");
+  const memberRoleEl = document.getElementById("memberRole");
 
   /* ================== Estado ================== */
   let unlocked = false;
   let currentId = null;
   let songsCache = new Map(); // id -> song data
-  let setToday = [];          // [{id,toKey}]
+
+  // Oficial (compartida)
+  let officialSet = [];       // [{id,toKey}]
+  const officialRef = doc(db,"shared","today");
+
+  // Personal (tu lista) - LIBRE
+  let mySet = [];             // [{id,toKey}]
+  const mySetRef = doc(db,"shared","personal_"+deviceId);
+
+  // Integrantes
+  let membersCache = [];      // [{id,name,role,active,order}]
+  const integrantesColl = collection(db, "integrantes");
 
   /* drag state */
   let dragId = null;
@@ -290,7 +383,8 @@
     unlocked = v;
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
-    renderSetlist();
+    renderOfficial();
+    renderMySet();
   }
 
   /* ================== Tonos ================== */
@@ -315,7 +409,6 @@
   }
 
   function buildToKeySelect(sel, originalKey){
-    // original primero, luego el resto
     const orig = originalKey || "C";
     const list = [orig, ...KEY_OPTIONS.filter(k=>k!==orig)];
     sel.innerHTML = "";
@@ -419,11 +512,9 @@
     }).join("\n");
   }
 
-  /* ======= extraer solo acordes (del texto ya transpuesto) ======= */
   function extractChordsOnly(transposedText){
     const lines = (transposedText || "").split("\n");
     const chordLines = [];
-
     for(const line of lines){
       if(lineLooksLikeChords(line)){
         chordLines.push(line.trim().replace(/\s{2,}/g," "));
@@ -459,7 +550,7 @@
   preferEl.addEventListener("change", updateTransposePreview);
   toKeySel.addEventListener("change", updateTransposePreview);
 
-  /* ================== DETECTOR AUTOMÁTICO (Mayor/Menor) — mejorado ================== */
+  /* ================== DETECTOR AUTOMÁTICO (Mayor/Menor) ================== */
   function extractChordsFromText(text){
     const chords = [];
     const lines = (text||"").split("\n");
@@ -525,18 +616,15 @@
       else score -= counts[pc]*1.2;
     }
 
-    // tónica y dominante
     score += counts[keyPC] * 4;
     const V = (keyPC + 7) % 12;
     score += counts[V] * 2.5;
 
-    // primer y último acorde (muy importante)
     const first = pcsInOrder[0];
     const last  = pcsInOrder[pcsInOrder.length-1];
     if(first===keyPC) score += 5;
     if(last===keyPC)  score += 8;
 
-    // tendencia menor/mayor
     const totalQual = minorCount + majorCount;
     if(totalQual>0){
       const minorRatio = minorCount / totalQual;
@@ -555,25 +643,19 @@
     }
 
     let best = { score:-Infinity, keyPC:0, mode:"major" };
-    let bestMaj = { score:-Infinity, keyPC:0, mode:"major" };
-    let bestMin = { score:-Infinity, keyPC:0, mode:"minor" };
 
     for(let keyPC=0; keyPC<12; keyPC++){
       const sMaj = scoreKeyCandidate(chords, keyPC, "major");
-      if(sMaj > bestMaj.score) bestMaj = { score:sMaj, keyPC, mode:"major" };
       if(sMaj > best.score) best = { score:sMaj, keyPC, mode:"major" };
 
       const sMin = scoreKeyCandidate(chords, keyPC, "minor");
-      if(sMin > bestMin.score) bestMin = { score:sMin, keyPC, mode:"minor" };
       if(sMin > best.score) best = { score:sMin, keyPC, mode:"minor" };
     }
 
-    // Heurística anti “relativo menor”:
-    // Si gana el menor, pero el mayor relativo está muy cerca, preferimos el mayor.
     if(best.mode==="minor"){
-      const relMaj = (best.keyPC + 3) % 12; // Am -> C
+      const relMaj = (best.keyPC + 3) % 12;
       const relMajScore = scoreKeyCandidate(chords, relMaj, "major");
-      if(relMajScore >= best.score * 0.92){ // “muy cerca”
+      if(relMajScore >= best.score * 0.92){
         best = { score: relMajScore, keyPC: relMaj, mode: "major" };
       }
     }
@@ -604,15 +686,29 @@
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     }[s]));
   }
+
   function getSong(id){ return songsCache.get(id) || null; }
+
+  function normalizeItems(items){
+    if(!Array.isArray(items)) return [];
+    if(items.length===0) return [];
+    if(typeof items[0] === "string"){
+      return items.map(id=>({id, toKey:null}));
+    }
+    return items
+      .filter(x=>x && typeof x.id === "string")
+      .map(x=>({ id:x.id, toKey: x.toKey ?? null }));
+  }
 
   /* ================== Tabs / Config ================== */
   window.showTab = function(name){
-    document.getElementById("library").classList.add("hidden");
-    document.getElementById("today").classList.add("hidden");
-    document.getElementById("config").classList.add("hidden");
+    ["library","official","mylist","members","config"].forEach(id=>{
+      document.getElementById(id).classList.add("hidden");
+    });
     document.getElementById(name).classList.remove("hidden");
-    if(name==="today") renderSetlist();
+    if(name==="official") renderOfficial();
+    if(name==="mylist") renderMySet();
+    if(name==="members") renderMembers();
   };
 
   window.unlock = function(){
@@ -633,7 +729,7 @@
     setUnlocked(false);
   };
 
-  /* ================== Biblioteca (Guardar/Eliminar/Cargar) ================== */
+  /* ================== Biblioteca (bloqueada) ================== */
   window.clearForm = function(){
     currentId = null;
     titleEl.value = "";
@@ -673,8 +769,11 @@
 
     await setDoc(doc(db,"songs",currentId), { deleted:true }, { merge:true });
 
-    setToday = setToday.filter(x=>x.id!==currentId);
-    await saveSetlist();
+    officialSet = officialSet.filter(x=>x.id!==currentId);
+    mySet = mySet.filter(x=>x.id!==currentId);
+
+    try{ await saveOfficial(); }catch(e){}
+    try{ await saveMy(); }catch(e){}
 
     window.clearForm();
   };
@@ -693,80 +792,104 @@
     window.showTab("library");
   };
 
-  /* ================== Setlist compartido ================== */
-  const setRef = doc(db,"shared","today");
-
-  function normalizeSetItems(items){
-    if(!Array.isArray(items)) return [];
-    if(items.length===0) return [];
-    if(typeof items[0] === "string"){
-      return items.map(id=>({id, toKey:null}));
-    }
-    return items
-      .filter(x=>x && typeof x.id === "string")
-      .map(x=>({ id:x.id, toKey: x.toKey ?? null }));
+  /* ================== Lista Oficial (bloqueada) ================== */
+  async function saveOfficial(){
+    await setDoc(officialRef, { items: officialSet }, { merge:true });
   }
 
-  async function saveSetlist(){
-    await setDoc(setRef, { items: setToday }, { merge:true });
-  }
-
-  window.addToSet = async function(){
+  window.addToOfficial = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    const id = songPickerEl.value;
+    const id = songPickerOfficialEl.value;
     if(!id){ alert("Elegí una canción."); return; }
-    if(setToday.some(x=>x.id===id)){ alert("Ya está en el setlist."); return; }
+    if(officialSet.some(x=>x.id===id)){ alert("Ya está en la lista oficial."); return; }
 
     const s = getSong(id);
-    const defaultTo = s?.key || "C"; // ✅ ahora por defecto: tono original
-    setToday = [...setToday, {id, toKey: defaultTo}];
-    await saveSetlist();
+    const defaultTo = s?.key || "C";
+    officialSet = [...officialSet, {id, toKey: defaultTo}];
+    await saveOfficial();
   };
 
-  window.clearSet = async function(){
+  window.clearOfficial = async function(){
     if(!unlocked){ alert("Bloqueado. Desbloqueá en Configuración."); return; }
-    if(!confirm("¿Vaciar setlist?")) return;
-    setToday = [];
-    await saveSetlist();
+    if(!confirm("¿Vaciar lista oficial?")) return;
+    officialSet = [];
+    await saveOfficial();
   };
 
-  window.setToKey = async function(id, toKey){
-    const entry = setToday.find(x=>x.id===id);
+  window.setOfficialToKey = async function(id, toKey){
+    if(!unlocked) return;
+    const entry = officialSet.find(x=>x.id===id);
     if(!entry) return;
     entry.toKey = toKey;
-    setToday = setToday.map(x=> x.id===id ? entry : x);
-    if(unlocked) await saveSetlist();
-    renderSetlist();
+    officialSet = officialSet.map(x=> x.id===id ? entry : x);
+    await saveOfficial();
+    renderOfficial();
   };
 
-  window.removeFromSet = async function(id){
+  window.removeFromOfficial = async function(id){
     if(!unlocked) return;
-    setToday = setToday.filter(x=>x.id!==id);
-    await saveSetlist();
+    officialSet = officialSet.filter(x=>x.id!==id);
+    await saveOfficial();
   };
 
-  window.printSetlist = function(){
-    window.print();
-  };
+  window.printOfficial = function(){ window.print(); };
 
-  /* ================== Drag & Drop reorder ================== */
-  async function reorderSetlist(draggedId, targetId){
-    if(!unlocked) return;
-
-    const from = setToday.findIndex(x=>x.id===draggedId);
-    const to   = setToday.findIndex(x=>x.id===targetId);
-    if(from<0 || to<0 || from===to) return;
-
-    const arr = setToday.slice();
-    const [moved] = arr.splice(from, 1);
-    arr.splice(to, 0, moved);
-    setToday = arr;
-
-    await saveSetlist();
-    renderSetlist();
+  /* ================== Mi Lista (libre) ================== */
+  async function saveMy(){
+    await setDoc(mySetRef, { items: mySet }, { merge:true });
   }
 
-  function attachDragHandlers(row){
+  window.addToMy = async function(){
+    const id = songPickerMyEl.value;
+    if(!id){ alert("Elegí una canción."); return; }
+    if(mySet.some(x=>x.id===id)){ alert("Ya está en tu lista."); return; }
+
+    const s = getSong(id);
+    const defaultTo = s?.key || "C";
+    mySet = [...mySet, {id, toKey: defaultTo}];
+    await saveMy();
+  };
+
+  window.clearMy = async function(){
+    if(!confirm("¿Vaciar tu lista personal?")) return;
+    mySet = [];
+    await saveMy();
+  };
+
+  window.setMyToKey = async function(id, toKey){
+    const entry = mySet.find(x=>x.id===id);
+    if(!entry) return;
+    entry.toKey = toKey;
+    mySet = mySet.map(x=> x.id===id ? entry : x);
+    await saveMy();
+    renderMySet();
+  };
+
+  window.removeFromMy = async function(id){
+    mySet = mySet.filter(x=>x.id!==id);
+    await saveMy();
+  };
+
+  window.printMy = function(){ window.print(); };
+
+  /* ================== Drag & Drop (OFICIAL) bloqueado ================== */
+  async function reorderOfficial(draggedId, targetId){
+    if(!unlocked) return;
+
+    const from = officialSet.findIndex(x=>x.id===draggedId);
+    const to   = officialSet.findIndex(x=>x.id===targetId);
+    if(from<0 || to<0 || from===to) return;
+
+    const arr = officialSet.slice();
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    officialSet = arr;
+
+    await saveOfficial();
+    renderOfficial();
+  }
+
+  function attachDragHandlersOfficial(row){
     if(!unlocked) return;
 
     row.addEventListener("dragstart", (e)=>{
@@ -788,48 +911,146 @@
       e.dataTransfer.dropEffect = "move";
     });
 
-    row.addEventListener("dragleave", ()=>{
-      row.classList.remove("drop-target");
-    });
+    row.addEventListener("dragleave", ()=> row.classList.remove("drop-target"));
 
     row.addEventListener("drop", async (e)=>{
       e.preventDefault();
       row.classList.remove("drop-target");
       const dragged = e.dataTransfer.getData("text/plain") || dragId;
       const target = row.dataset.id;
-      await reorderSetlist(dragged, target);
+      await reorderOfficial(dragged, target);
     });
   }
 
-  function renderSetlist(){
-    setOrderEl.innerHTML = "";
-    setSongsEl.innerHTML = "";
-    printBlocks.innerHTML = "";
+  /* ================== Drag & Drop (MI LISTA) libre ================== */
+  async function reorderMy(draggedId, targetId){
+    const from = mySet.findIndex(x=>x.id===draggedId);
+    const to   = mySet.findIndex(x=>x.id===targetId);
+    if(from<0 || to<0 || from===to) return;
 
-    const visible = setToday.filter(x=>getSong(x.id));
-    emptySetEl.style.display = (visible.length===0) ? "block" : "none";
+    const arr = mySet.slice();
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    mySet = arr;
+
+    await saveMy();
+    renderMySet();
+  }
+
+  function attachDragHandlersMy(row){
+    row.addEventListener("dragstart", (e)=>{
+      dragId = row.dataset.id;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragId);
+    });
+
+    row.addEventListener("dragend", ()=>{
+      dragId = null;
+      row.classList.remove("dragging");
+      document.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target"));
+    });
+
+    row.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      row.classList.add("drop-target");
+      e.dataTransfer.dropEffect = "move";
+    });
+
+    row.addEventListener("dragleave", ()=> row.classList.remove("drop-target"));
+
+    row.addEventListener("drop", async (e)=>{
+      e.preventDefault();
+      row.classList.remove("drop-target");
+      const dragged = e.dataTransfer.getData("text/plain") || dragId;
+      const target = row.dataset.id;
+      await reorderMy(dragged, target);
+    });
+  }
+
+  /* ================== INTEGRANTES (leer de /integrantes) ================== */
+  function renderMembers(){
+    if(!membersListEl) return;
+    membersListEl.innerHTML = "";
+
+    if(!membersCache.length){
+      membersListEl.innerHTML = `<div class="muted">No hay integrantes para mostrar.</div>`;
+      return;
+    }
+
+    const list = [...membersCache].sort((a,b)=>{
+      const ao = (a.order ?? 999999);
+      const bo = (b.order ?? 999999);
+      if(ao !== bo) return ao - bo;
+      return (a.name||"").localeCompare(b.name||"");
+    });
+
+    for(const m of list){
+      const div = document.createElement("div");
+      div.className = "list-item";
+      div.innerHTML = `
+        <div>
+          <div><b>${escapeHtml(m.name || "(Sin nombre)")}</b></div>
+          <div class="muted">${escapeHtml(m.role || "Sin rol")}</div>
+        </div>
+        <div class="mini no-print">
+          <button onclick="removeMember('${m.id}')">Quitar</button>
+        </div>
+      `;
+      membersListEl.appendChild(div);
+    }
+  }
+
+  window.addMember = async function(){
+    const name = (memberNameEl?.value || "").trim();
+    const role = (memberRoleEl?.value || "").trim();
+    if(!name){ alert("Escribí el nombre."); return; }
+
+    const id = (crypto.randomUUID ? crypto.randomUUID() : ("m_"+Date.now()+Math.random().toString(16).slice(2)));
+
+    await setDoc(doc(db,"integrantes",id),{
+      name,
+      role,
+      active: true,
+      deleted: false,
+      createdAt: Date.now()
+    }, { merge:true });
+
+    if(memberNameEl) memberNameEl.value = "";
+    if(memberRoleEl) memberRoleEl.value = "";
+  };
+
+  window.removeMember = async function(id){
+    if(!id) return;
+    // mejor marcar deleted
+    await setDoc(doc(db,"integrantes",id), { deleted:true, active:false }, { merge:true });
+  };
+
+  /* ================== Render Lista Oficial ================== */
+  function renderOfficial(){
+    officialOrderEl.innerHTML = "";
+    officialSongsEl.innerHTML = "";
+    officialPrintBlocks.innerHTML = "";
+
+    const visible = officialSet.filter(x=>getSong(x.id));
+    officialEmptyEl.style.display = (visible.length===0) ? "block" : "none";
 
     visible.forEach((entry, idx)=>{
       const s = getSong(entry.id);
       const isMin = (s.mode==="minor");
       const originalKey = s.key || "C";
-
-      // ✅ si venía viejo / null → usamos original como default (sin forzar guardar)
       const toKeyRaw = entry.toKey || originalKey;
+      const prefer = s.prefer || "sharps";
 
       const originalKeyLabel = originalKey + (isMin ? "m" : "");
       const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
-      const prefer = s.prefer || "sharps";
 
       const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
       const chordsOnly = extractChordsOnly(transposed);
 
-      // Orden / controles
       const row = document.createElement("div");
       row.className = "list-item";
       row.dataset.id = entry.id;
-
-      // draggable solo en modo edición
       row.draggable = !!unlocked;
 
       row.innerHTML = `
@@ -846,20 +1067,17 @@
         <div class="mini">
           <label class="muted" style="margin:0">Tocar en:</label>
           <select data-id="${entry.id}" ${unlocked ? "" : "disabled"} style="min-width:170px"></select>
-          <button onclick="removeFromSet('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
+          <button onclick="removeFromOfficial('${entry.id}')" ${unlocked ? "" : "disabled"}>Quitar</button>
         </div>
       `;
-      setOrderEl.appendChild(row);
-
-      // activar drag handlers
-      attachDragHandlers(row);
+      officialOrderEl.appendChild(row);
+      attachDragHandlersOfficial(row);
 
       const sel = row.querySelector("select");
-      buildToKeySelect(sel, originalKey);  // ✅ original primero
+      buildToKeySelect(sel, originalKey);
       sel.value = toKeyRaw;
-      sel.addEventListener("change", ()=> window.setToKey(entry.id, sel.value));
+      sel.addEventListener("change", ()=> window.setOfficialToKey(entry.id, sel.value));
 
-      // Vista en pantalla (ACORDES + CANCIÓN)
       const box = document.createElement("div");
       box.className = "songbox";
       box.innerHTML = `
@@ -875,9 +1093,8 @@
         <div class="print-chords-title">CANCIÓN</div>
         <pre class="lyrics">${escapeHtml(transposed)}</pre>
       `;
-      setSongsEl.appendChild(box);
+      officialSongsEl.appendChild(box);
 
-      // Bloque impresión (solo se imprime esto)
       const block = document.createElement("div");
       block.className = "print-block";
       block.innerHTML = `
@@ -892,9 +1109,98 @@
 
         <div class="print-chords-title">CANCIÓN</div>
         <pre class="lyrics">${escapeHtml(transposed)}</pre>
-        <hr />
+        ${idx < visible.length-1 ? "<hr />" : ""}
       `;
-      printBlocks.appendChild(block);
+      officialPrintBlocks.appendChild(block);
+    });
+  }
+
+  /* ================== Render Mi Lista ================== */
+  function renderMySet(){
+    myOrderEl.innerHTML = "";
+    mySongsEl.innerHTML = "";
+    myPrintBlocks.innerHTML = "";
+
+    const visible = mySet.filter(x=>getSong(x.id));
+    myEmptyEl.style.display = (visible.length===0) ? "block" : "none";
+
+    visible.forEach((entry, idx)=>{
+      const s = getSong(entry.id);
+      const isMin = (s.mode==="minor");
+      const originalKey = s.key || "C";
+      const toKeyRaw = entry.toKey || originalKey;
+      const prefer = s.prefer || "sharps";
+
+      const originalKeyLabel = originalKey + (isMin ? "m" : "");
+      const toKeyLabel = toKeyRaw + (isMin ? "m" : "");
+
+      const transposed = transposeAuto(s.body||"", originalKey, toKeyRaw, prefer);
+      const chordsOnly = extractChordsOnly(transposed);
+
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.dataset.id = entry.id;
+      row.draggable = true;
+
+      row.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="drag-handle" title="Arrastrar para ordenar">⠿</span>
+          <div>
+            <div><b>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</b></div>
+            <div class="muted">
+              Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+              Tocar en: <span class="pill">${escapeHtml(toKeyLabel)}</span> (${modeLabel(s.mode)})
+            </div>
+          </div>
+        </div>
+        <div class="mini">
+          <label class="muted" style="margin:0">Tocar en:</label>
+          <select data-id="${entry.id}" style="min-width:170px"></select>
+          <button onclick="removeFromMy('${entry.id}')">Quitar</button>
+        </div>
+      `;
+      myOrderEl.appendChild(row);
+      attachDragHandlersMy(row);
+
+      const sel = row.querySelector("select");
+      buildToKeySelect(sel, originalKey);
+      sel.value = toKeyRaw;
+      sel.addEventListener("change", ()=> window.setMyToKey(entry.id, sel.value));
+
+      const box = document.createElement("div");
+      box.className = "songbox";
+      box.innerHTML = `
+        <h4>${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</h4>
+        <div class="songmeta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: <b>${escapeHtml(toKeyLabel)}</b> (${modeLabel(s.mode)})
+        </div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="chordsOnly">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+      `;
+      mySongsEl.appendChild(box);
+
+      const block = document.createElement("div");
+      block.className = "print-block";
+      block.innerHTML = `
+        <div class="print-title">${escapeHtml((idx+1)+". "+(s.title||"(Sin título)"))}</div>
+        <div class="print-meta">
+          Original: ${escapeHtml(originalKeyLabel)} (${modeLabel(s.mode)}) •
+          Tocar en: ${escapeHtml(toKeyLabel)} (${modeLabel(s.mode)})
+        </div>
+
+        <div class="print-chords-title">ACORDES</div>
+        <div class="print-chords">${escapeHtml(chordsOnly)}</div>
+
+        <div class="print-chords-title">CANCIÓN</div>
+        <pre class="lyrics">${escapeHtml(transposed)}</pre>
+        ${idx < visible.length-1 ? "<hr />" : ""}
+      `;
+      myPrintBlocks.appendChild(block);
     });
   }
 
@@ -905,7 +1211,8 @@
 
     songsCache.clear();
     songListEl.innerHTML = "";
-    songPickerEl.innerHTML = "";
+    songPickerOfficialEl.innerHTML = "";
+    songPickerMyEl.innerHTML = "";
 
     snap.forEach(docu=>{
       const d = docu.data();
@@ -927,31 +1234,66 @@
       `;
       songListEl.appendChild(div);
 
-      const opt=document.createElement("option");
-      opt.value=docu.id;
-      opt.textContent=d.title || "(Sin título)";
-      songPickerEl.appendChild(opt);
+      const opt1=document.createElement("option");
+      opt1.value=docu.id;
+      opt1.textContent=d.title || "(Sin título)";
+      songPickerOfficialEl.appendChild(opt1);
+
+      const opt2=document.createElement("option");
+      opt2.value=docu.id;
+      opt2.textContent=d.title || "(Sin título)";
+      songPickerMyEl.appendChild(opt2);
     });
 
     updateTransposePreview();
-    renderSetlist();
+    renderOfficial();
+    renderMySet();
   }, (err)=>{
     console.error(err);
     netStatus.textContent = "⚠️ Error Firebase (revisar reglas Firestore)";
     netStatus.className = "status warn";
   });
 
-  onSnapshot(setRef, async (snap)=>{
+  onSnapshot(officialRef, async (snap)=>{
     const itemsRaw = (snap.exists() ? snap.data()?.items : null);
-    const normalized = normalizeSetItems(itemsRaw);
-
+    const normalized = normalizeItems(itemsRaw);
     const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
-    setToday = normalized;
+    officialSet = normalized;
 
     if(wasOld){
-      try { await saveSetlist(); } catch(e){ console.warn("No pude migrar setlist:", e); }
+      try { await saveOfficial(); } catch(e){ console.warn("No pude migrar lista oficial:", e); }
     }
-    renderSetlist();
+    renderOfficial();
+  });
+
+  onSnapshot(mySetRef, async (snap)=>{
+    const itemsRaw = (snap.exists() ? snap.data()?.items : null);
+    const normalized = normalizeItems(itemsRaw);
+    const wasOld = Array.isArray(itemsRaw) && itemsRaw.length>0 && typeof itemsRaw[0]==="string";
+    mySet = normalized;
+
+    if(wasOld){
+      try { await saveMy(); } catch(e){ console.warn("No pude migrar mi lista:", e); }
+    }
+    renderMySet();
+  });
+
+  // Integrantes: lee lo existente en /integrantes
+  onSnapshot(integrantesColl, (snap)=>{
+    const arr = [];
+    snap.forEach(docu=>{
+      const d = docu.data() || {};
+      if(d.deleted) return;
+      if(d.active === false) return;
+      arr.push({
+        id: docu.id,
+        name: d.name || d.nombre || "",
+        role: d.role || d.rol || "",
+        order: d.order ?? d.orden ?? null
+      });
+    });
+    membersCache = arr;
+    renderMembers();
   });
 
   // auto-desbloqueo si ya guardaste la clave correcta
