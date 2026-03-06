@@ -60,17 +60,15 @@
   .dragging{opacity:.55}
   .drop-target{outline:2px dashed #999; outline-offset:4px}
 
-  /* ===== PRINT (sin duplicados y sin cortes) ===== */
+  /* ===== PRINT ===== */
   @media print{
     .tabs,.no-print{display:none !important}
     body{max-width:none;margin:0}
     .card{border:none;padding:0}
 
-    /* ocultar vistas en pantalla para que no dupliquen */
     #officialOrder, #officialSongs,
     #myOrder, #mySongs {display:none !important;}
 
-    /* imprimir solo las áreas de impresión */
     #officialPrintArea, #myPrintArea{display:block !important;}
     #officialPrintArea.hidden, #myPrintArea.hidden{display:block !important;}
 
@@ -177,7 +175,7 @@
   <div id="songList"></div>
 </div>
 
-<!-- LISTA OFICIAL (compartida) -->
+<!-- LISTA OFICIAL -->
 <div id="official" class="card hidden">
   <div class="grid2 no-print">
     <div>
@@ -190,8 +188,8 @@
       </div>
 
       <div class="muted">
-        Por defecto queda en el <b>tono original</b>. En el selector aparece primero el original y debajo los demás tonos.
-        <br>Para reordenar: <b>modo edición</b> → arrastrar con el icono ⠿.
+        Por defecto queda en el <b>tono original</b>.
+        <br>Para reordenar: <b>modo edición</b> → arrastrar con ⠿.
       </div>
 
       <div class="mini" style="margin-top:10px">
@@ -211,17 +209,16 @@
   <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
   <div id="officialSongs"></div>
 
-  <!-- PRINT AREA (solo se imprime esto) -->
   <div id="officialPrintArea" class="hidden">
     <div id="officialPrintBlocks"></div>
   </div>
 </div>
 
-<!-- MI LISTA (personal) -->
+<!-- MI LISTA -->
 <div id="mylist" class="card hidden">
   <div class="grid2 no-print">
     <div>
-      <h3 style="margin:0 0 10px">Mi Lista de Alabanzas (personal) ✅ Libre para todos</h3>
+      <h3 style="margin:0 0 10px">Mi Lista de Alabanzas (personal) ✅ Libre</h3>
 
       <div class="mini">
         <select id="songPickerMy" style="flex:1;min-width:240px"></select>
@@ -230,8 +227,8 @@
       </div>
 
       <div class="muted">
-        ✅ Esta lista es <b>personal por dispositivo</b> y está <b>libre</b>: se puede agregar, quitar, cambiar tono y reordenar sin clave.
-        <br>Para reordenar: arrastrá con ⠿.
+        Esta lista es <b>personal por dispositivo</b> y está libre: agregar, quitar, cambiar tono y reordenar.
+        <br>Reordenar: arrastrá con ⠿.
       </div>
 
       <div class="mini" style="margin-top:10px">
@@ -251,18 +248,32 @@
   <h3 style="margin:0 0 10px">Canciones (ACORDES + CANCIÓN)</h3>
   <div id="mySongs"></div>
 
-  <!-- PRINT AREA (solo se imprime esto) -->
   <div id="myPrintArea" class="hidden">
     <div id="myPrintBlocks"></div>
   </div>
 </div>
 
-<!-- INTEGRANTES -->
+<!-- INTEGRANTES (lee desde /integrantes) -->
 <div id="members" class="card hidden">
   <h3 style="margin:0 0 10px">Integrantes</h3>
-  <div class="muted">
-    Placeholder. Si ya tenés integrantes en Firestore, decime colección/documento y lo conecto.
+
+  <div class="mini no-print">
+    <input id="memberName" placeholder="Nombre" style="flex:1;min-width:220px">
+    <select id="memberRole" style="min-width:180px">
+      <option value="">Rol (opcional)</option>
+      <option>Voz</option>
+      <option>Guitarra</option>
+      <option>Bajo</option>
+      <option>Batería</option>
+      <option>Teclas</option>
+      <option>Director</option>
+      <option>Audio</option>
+    </select>
+    <button onclick="addMember()">Agregar</button>
   </div>
+
+  <div class="muted">Se muestra lo que ya tenías guardado en Firestore (colección <b>integrantes</b>).</div>
+  <div id="membersList" style="margin-top:10px"></div>
 </div>
 
 <!-- CONFIG -->
@@ -338,10 +349,14 @@
   const toKeySel = document.getElementById("toKey");
   const transposedOut = document.getElementById("transposedOut");
 
+  // Integrantes UI
+  const membersListEl = document.getElementById("membersList");
+  const memberNameEl = document.getElementById("memberName");
+  const memberRoleEl = document.getElementById("memberRole");
+
   /* ================== Estado ================== */
   let unlocked = false;
   let currentId = null;
-
   let songsCache = new Map(); // id -> song data
 
   // Oficial (compartida)
@@ -351,6 +366,10 @@
   // Personal (tu lista) - LIBRE
   let mySet = [];             // [{id,toKey}]
   const mySetRef = doc(db,"shared","personal_"+deviceId);
+
+  // Integrantes
+  let membersCache = [];      // [{id,name,role,active,order}]
+  const integrantesColl = collection(db, "integrantes");
 
   /* drag state */
   let dragId = null;
@@ -365,7 +384,6 @@
     editStatus.textContent = v ? "Modo edición: ACTIVADO" : "Modo lectura (bloqueado)";
     editStatus.className = "status " + (v ? "ok" : "warn");
     renderOfficial();
-    // 👇 Mi Lista NO depende del bloqueo, igual se renderiza normal:
     renderMySet();
   }
 
@@ -668,6 +686,7 @@
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     }[s]));
   }
+
   function getSong(id){ return songsCache.get(id) || null; }
 
   function normalizeItems(items){
@@ -689,6 +708,7 @@
     document.getElementById(name).classList.remove("hidden");
     if(name==="official") renderOfficial();
     if(name==="mylist") renderMySet();
+    if(name==="members") renderMembers();
   };
 
   window.unlock = function(){
@@ -709,7 +729,7 @@
     setUnlocked(false);
   };
 
-  /* ================== Biblioteca (Guardar/Eliminar/Cargar) - BLOQUEADO ================== */
+  /* ================== Biblioteca (bloqueada) ================== */
   window.clearForm = function(){
     currentId = null;
     titleEl.value = "";
@@ -772,7 +792,7 @@
     window.showTab("library");
   };
 
-  /* ================== Lista Oficial (compartida) - BLOQUEADA ================== */
+  /* ================== Lista Oficial (bloqueada) ================== */
   async function saveOfficial(){
     await setDoc(officialRef, { items: officialSet }, { merge:true });
   }
@@ -814,7 +834,7 @@
 
   window.printOfficial = function(){ window.print(); };
 
-  /* ================== Mi Lista (personal) - LIBRE ✅ ================== */
+  /* ================== Mi Lista (libre) ================== */
   async function saveMy(){
     await setDoc(mySetRef, { items: mySet }, { merge:true });
   }
@@ -852,7 +872,7 @@
 
   window.printMy = function(){ window.print(); };
 
-  /* ================== Drag & Drop reorder (OFICIAL) - BLOQUEADO ================== */
+  /* ================== Drag & Drop (OFICIAL) bloqueado ================== */
   async function reorderOfficial(draggedId, targetId){
     if(!unlocked) return;
 
@@ -891,9 +911,7 @@
       e.dataTransfer.dropEffect = "move";
     });
 
-    row.addEventListener("dragleave", ()=>{
-      row.classList.remove("drop-target");
-    });
+    row.addEventListener("dragleave", ()=> row.classList.remove("drop-target"));
 
     row.addEventListener("drop", async (e)=>{
       e.preventDefault();
@@ -904,7 +922,7 @@
     });
   }
 
-  /* ================== Drag & Drop reorder (MI LISTA) - LIBRE ✅ ================== */
+  /* ================== Drag & Drop (MI LISTA) libre ================== */
   async function reorderMy(draggedId, targetId){
     const from = mySet.findIndex(x=>x.id===draggedId);
     const to   = mySet.findIndex(x=>x.id===targetId);
@@ -939,9 +957,7 @@
       e.dataTransfer.dropEffect = "move";
     });
 
-    row.addEventListener("dragleave", ()=>{
-      row.classList.remove("drop-target");
-    });
+    row.addEventListener("dragleave", ()=> row.classList.remove("drop-target"));
 
     row.addEventListener("drop", async (e)=>{
       e.preventDefault();
@@ -951,6 +967,64 @@
       await reorderMy(dragged, target);
     });
   }
+
+  /* ================== INTEGRANTES (leer de /integrantes) ================== */
+  function renderMembers(){
+    if(!membersListEl) return;
+    membersListEl.innerHTML = "";
+
+    if(!membersCache.length){
+      membersListEl.innerHTML = `<div class="muted">No hay integrantes para mostrar.</div>`;
+      return;
+    }
+
+    const list = [...membersCache].sort((a,b)=>{
+      const ao = (a.order ?? 999999);
+      const bo = (b.order ?? 999999);
+      if(ao !== bo) return ao - bo;
+      return (a.name||"").localeCompare(b.name||"");
+    });
+
+    for(const m of list){
+      const div = document.createElement("div");
+      div.className = "list-item";
+      div.innerHTML = `
+        <div>
+          <div><b>${escapeHtml(m.name || "(Sin nombre)")}</b></div>
+          <div class="muted">${escapeHtml(m.role || "Sin rol")}</div>
+        </div>
+        <div class="mini no-print">
+          <button onclick="removeMember('${m.id}')">Quitar</button>
+        </div>
+      `;
+      membersListEl.appendChild(div);
+    }
+  }
+
+  window.addMember = async function(){
+    const name = (memberNameEl?.value || "").trim();
+    const role = (memberRoleEl?.value || "").trim();
+    if(!name){ alert("Escribí el nombre."); return; }
+
+    const id = (crypto.randomUUID ? crypto.randomUUID() : ("m_"+Date.now()+Math.random().toString(16).slice(2)));
+
+    await setDoc(doc(db,"integrantes",id),{
+      name,
+      role,
+      active: true,
+      deleted: false,
+      createdAt: Date.now()
+    }, { merge:true });
+
+    if(memberNameEl) memberNameEl.value = "";
+    if(memberRoleEl) memberRoleEl.value = "";
+  };
+
+  window.removeMember = async function(id){
+    if(!id) return;
+    // mejor marcar deleted
+    await setDoc(doc(db,"integrantes",id), { deleted:true, active:false }, { merge:true });
+  };
 
   /* ================== Render Lista Oficial ================== */
   function renderOfficial(){
@@ -1041,7 +1115,7 @@
     });
   }
 
-  /* ================== Render Mi Lista (LIBRE: tono + orden) ================== */
+  /* ================== Render Mi Lista ================== */
   function renderMySet(){
     myOrderEl.innerHTML = "";
     mySongsEl.innerHTML = "";
@@ -1066,8 +1140,6 @@
       const row = document.createElement("div");
       row.className = "list-item";
       row.dataset.id = entry.id;
-
-      // ✅ Mi Lista siempre reordenable
       row.draggable = true;
 
       row.innerHTML = `
@@ -1088,8 +1160,6 @@
         </div>
       `;
       myOrderEl.appendChild(row);
-
-      // ✅ activar drag handlers (Mi Lista)
       attachDragHandlersMy(row);
 
       const sel = row.querySelector("select");
@@ -1184,7 +1254,6 @@
     netStatus.className = "status warn";
   });
 
-  // Oficial
   onSnapshot(officialRef, async (snap)=>{
     const itemsRaw = (snap.exists() ? snap.data()?.items : null);
     const normalized = normalizeItems(itemsRaw);
@@ -1197,7 +1266,6 @@
     renderOfficial();
   });
 
-  // Personal
   onSnapshot(mySetRef, async (snap)=>{
     const itemsRaw = (snap.exists() ? snap.data()?.items : null);
     const normalized = normalizeItems(itemsRaw);
@@ -1208,6 +1276,24 @@
       try { await saveMy(); } catch(e){ console.warn("No pude migrar mi lista:", e); }
     }
     renderMySet();
+  });
+
+  // Integrantes: lee lo existente en /integrantes
+  onSnapshot(integrantesColl, (snap)=>{
+    const arr = [];
+    snap.forEach(docu=>{
+      const d = docu.data() || {};
+      if(d.deleted) return;
+      if(d.active === false) return;
+      arr.push({
+        id: docu.id,
+        name: d.name || d.nombre || "",
+        role: d.role || d.rol || "",
+        order: d.order ?? d.orden ?? null
+      });
+    });
+    membersCache = arr;
+    renderMembers();
   });
 
   // auto-desbloqueo si ya guardaste la clave correcta
